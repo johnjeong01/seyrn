@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────
+   DESIGN SYSTEM — SEYRN
+   Warm darkness. Quiet premium. Reflection.
+───────────────────────────────────────── */
+:root {
+  --ink:        #0f0e0c;
+  --cream:      #f5f0e8;
+  --warm:       #e8dfd0;
+  --gold:       #c9a84c;
+  --gold-light: #e8c97a;
+  --sage:       #4a6355;
+  --rust:       #8b4a2f;
+  --deep:       #1a1814;
+  --muted:      #7a7268;
+
+  --font-serif: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  --font-sans:  var(--font-dm-sans), system-ui, sans-serif;
+
+  /* Spacing rhythm */
+  --section-pad: clamp(5rem, 12vw, 10rem);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+  }
+
+  body {
+    background-color: var(--deep);
+    color: var(--cream);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.7;
+  }
+
+  ::selection {
+    background-color: rgba(201, 168, 76, 0.25);
+    color: var(--cream);
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--ink); }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(201, 168, 76, 0.3);
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--gold);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  /* Gold gradient text */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 60%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Cream gradient text (subtle) */
+  .text-cream-gradient {
+    background: linear-gradient(180deg, #ffffff 0%, var(--cream) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glass surfaces */
+  .glass {
+    background: rgba(26, 24, 20, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(201, 168, 76, 0.1);
+  }
+
+  .glass-warm {
+    background: rgba(232, 223, 208, 0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(232, 223, 208, 0.08);
+  }
+
+  /* Gold divider line */
+  .divider-gold {
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(201, 168, 76, 0.4) 30%,
+      rgba(201, 168, 76, 0.4) 70%,
+      transparent 100%
+    );
+  }
+
+  /* Glow effects */
+  .glow-gold {
+    box-shadow:
+      0 0 20px rgba(201, 168, 76, 0.2),
+      0 0 60px rgba(201, 168, 76, 0.08);
+  }
+
+  .glow-gold-text {
+    text-shadow: 0 0 40px rgba(201, 168, 76, 0.4);
+  }
+
+  /* Fade-in animations */
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animate-fade-up {
+    animation: fadeUp 0.9s ease-out forwards;
+  }
+
+  .animate-fade-up-delay-1 {
+    animation: fadeUp 0.9s ease-out 0.15s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-up-delay-2 {
+    animation: fadeUp 0.9s ease-out 0.3s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-up-delay-3 {
+    animation: fadeUp 0.9s ease-out 0.45s forwards;
+    opacity: 0;
+  }
+
+  /* Pulse dot (current position marker) */
+  .pulse-gold {
+    animation: pulseGold 2.5s ease-in-out infinite;
+  }
+
+  /* Blur reveal */
+  .blur-locked {
+    filter: blur(8px);
+    user-select: none;
+    pointer-events: none;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGold {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(201, 168, 76, 0);
+  }
+}
+
+@keyframes drawLine {
+  from { stroke-dashoffset: 1000; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
