@@ -177,6 +177,7 @@ export async function POST(req: NextRequest) {
         const anthropicStream = client.messages.stream({
           model: "claude-sonnet-4-6",
           max_tokens: 8096,
+          system: "You are a life pattern analyst. Output only a single valid JSON object with no markdown, no code blocks, no explanation, and no trailing text. Every string value must be properly escaped.",
           messages: [{ role: "user", content: prompt }],
         });
 

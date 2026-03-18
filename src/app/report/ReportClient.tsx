@@ -230,16 +230,24 @@ export default function ReportClient() {
           if (done) break;
           text += decoder.decode(value, { stream: true });
         }
+        text += decoder.decode(); // flush remaining bytes
 
         // Check for server-side error sentinel
         const errIdx = text.indexOf("\x00ERR:");
         if (errIdx !== -1) throw new Error(text.slice(errIdx + 5));
 
-        // Extract and parse the JSON report
+        // Extract the outermost JSON object
         const start = text.indexOf("{");
         const end = text.lastIndexOf("}");
         if (start === -1 || end === -1) throw new Error("Invalid response format");
-        const report = JSON.parse(text.slice(start, end + 1)) as ReportData;
+        const jsonStr = text.slice(start, end + 1);
+
+        let report: ReportData;
+        try {
+          report = JSON.parse(jsonStr) as ReportData;
+        } catch {
+          throw new Error("Report generation failed — please try again");
+        }
         report.generated_at = new Date().toISOString();
 
         localStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(report));
