@@ -150,15 +150,9 @@ export async function POST(req: NextRequest) {
           model: "claude-sonnet-4-6",
           max_tokens: 8096,
           system:
-            "You are a life pattern analyst. Output only valid JSON. No markdown, no code fences, no explanation.",
-          messages: [
-            { role: "user", content: prompt },
-            { role: "assistant", content: "{" },
-          ],
+            "You are a life pattern analyst. Output only valid JSON. No markdown, no code fences, no explanation. Start your response with { and end with }.",
+          messages: [{ role: "user", content: prompt }],
         });
-
-        // First character is always "{" from the prefill — send it immediately
-        controller.enqueue(encoder.encode("{"));
 
         for await (const event of anthropicStream) {
           if (

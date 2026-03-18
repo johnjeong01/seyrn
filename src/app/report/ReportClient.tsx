@@ -236,8 +236,11 @@ export default function ReportClient() {
         const errIdx = text.indexOf("\x00ERR:");
         if (errIdx !== -1) throw new Error(text.slice(errIdx + 5).trim());
 
-        // Parse: text is already a complete JSON object (starts with "{" from prefill)
-        const report = JSON.parse(text) as ReportData;
+        // Extract outermost JSON object (strips any accidental wrapper text)
+        const start = text.indexOf("{");
+        const end = text.lastIndexOf("}");
+        if (start === -1 || end === -1) throw new Error("Invalid response format");
+        const report = JSON.parse(text.slice(start, end + 1)) as ReportData;
         report.generated_at = new Date().toISOString();
         localStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(report));
         setReport(report);
