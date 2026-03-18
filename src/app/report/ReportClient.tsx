@@ -212,17 +212,35 @@ export default function ReportClient() {
         if (!res.ok) {
           let errorMsg = `Server error ${res.status}`;
           try {
-            const body = (await res.json()) as { error?: string };
-            if (body.error) errorMsg = body.error;
+            const errBody = (await res.json()) as { error?: string };
+            if (errBody.error) errorMsg = errBody.error;
           } catch {
             // non-JSON response (e.g. Vercel HTML error page)
           }
           throw new Error(errorMsg);
         }
 
-        const body = (await res.json()) as { report: ReportData };
-        localStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(body.report));
-        setReport(body.report);
+        // Accumulate streamed text
+        if (!res.body) throw new Error("No response body");
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let text = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          text += decoder.decode(value, { stream: true });
+        }
+        text += decoder.decode();
+
+        // Check for error sentinel
+        const errIdx = text.indexOf("\x00ERR:");
+        if (errIdx !== -1) throw new Error(text.slice(errIdx + 5).trim());
+
+        // Parse: text is already a complete JSON object (starts with "{" from prefill)
+        const report = JSON.parse(text) as ReportData;
+        report.generated_at = new Date().toISOString();
+        localStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(report));
+        setReport(report);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Unknown error";
         setError(msg);

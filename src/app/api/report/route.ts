@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import type { OnboardingData } from "@/lib/onboarding-types";
-import type { ReportData } from "@/lib/report-types";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 function buildPrompt(data: OnboardingData): string {
@@ -79,134 +78,106 @@ BEHAVIORAL CALIBRATION (Stage 5):
 - Energy peaks when: ${data.energyPeak ? energyMap[data.energyPeak] : "not specified"}
 - First burnout signal: ${data.burnoutSignal ? burnoutMap[data.burnoutSignal] : "not specified"}
 
-Generate a Life Pattern Report as a single JSON object. Be deeply personal, specific to their data, and avoid generic statements. Write in second person ("you", "your"). Each section should feel like it was written by an analyst who truly studied this person.
-
-Return ONLY valid JSON matching this exact schema (no markdown, no explanation, just JSON):
+Return a single JSON object with this exact structure. Include exactly 3 themes, 4 moves, 5 forecast years (from next year):
 
 {
-  "pattern_name": "A 3-5 word phrase naming their life pattern (e.g., 'The Reluctant Pioneer')",
-  "pattern_archetype": "One sentence describing the core pattern archetype",
+  "pattern_name": "3-5 word phrase",
+  "pattern_archetype": "One sentence",
   "sections": {
-    "life_pattern": {
-      "headline": "Short evocative headline (under 12 words)",
-      "body": "3-4 paragraph deep analysis of their life pattern. Be specific — reference their actual turning points, years, and data."
-    },
+    "life_pattern": { "headline": "under 12 words", "body": "3-4 paragraphs" },
     "recurring_themes": {
-      "headline": "Short headline",
-      "themes": [
-        {
-          "title": "Theme name (2-4 words)",
-          "description": "What this theme means for them specifically (2-3 sentences)",
-          "evidence": "Which turning point(s) demonstrate this theme"
-        }
-      ],
-      "synthesis": "1-2 sentences tying the themes together"
+      "headline": "short headline",
+      "themes": [{ "title": "2-4 words", "description": "2-3 sentences", "evidence": "which turning point" }],
+      "synthesis": "1-2 sentences"
     },
     "next_turning_point": {
-      "headline": "Short headline about their predicted next pivot",
+      "headline": "short headline",
       "predicted_year": 2027,
       "energy_forecast": 7,
-      "trigger": "One sentence: what category of event will likely trigger the next turning point",
-      "body": "2-3 paragraphs analyzing what their next turning point will look and feel like, based on their patterns"
+      "trigger": "one sentence",
+      "body": "2-3 paragraphs"
     },
     "strategy": {
-      "headline": "Short strategic headline",
-      "core_insight": "One sentence — the single most important strategic insight for this person",
-      "moves": [
-        {
-          "title": "Move name (3-5 words)",
-          "action": "Specific action to take (1-2 sentences)"
-        }
-      ],
-      "body": "2 paragraphs of strategic advice, specific to their pattern and goals"
+      "headline": "short headline",
+      "core_insight": "one sentence",
+      "moves": [{ "title": "3-5 words", "action": "1-2 sentences" }],
+      "body": "2 paragraphs"
     },
     "action_plan": {
-      "headline": "Short headline",
-      "timeframes": {
-        "90_days": "What to focus on in the next 90 days (2-3 sentences)",
-        "6_months": "What to build toward in 6 months (2-3 sentences)",
-        "1_year": "Where they should be in 1 year (2-3 sentences)"
-      }
+      "headline": "short headline",
+      "timeframes": { "90_days": "2-3 sentences", "6_months": "2-3 sentences", "1_year": "2-3 sentences" }
     },
     "life_forecast": {
-      "headline": "Short headline for the forecast",
-      "forecast_years": [
-        { "year": 2026, "energy": 7, "theme": "2-4 word theme for that year" }
-      ],
-      "closing": "2-3 sentences of closing insight — make it memorable and personal"
+      "headline": "short headline",
+      "forecast_years": [{ "year": 2026, "energy": 7, "theme": "2-4 words" }],
+      "closing": "2-3 sentences"
     }
   }
-}
-
-Include exactly 3 recurring themes, exactly 4 strategic moves, and exactly 5 forecast years (starting from current year + 1). The forecast_years energy values should tell a coherent story based on their patterns.`;
+}`;
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "ANTHROPIC_API_KEY is not configured" },
-        { status: 500 }
-      );
-    }
-
-    const client = new Anthropic({ apiKey });
-
-    const body = (await req.json()) as { data: OnboardingData };
-    const { data } = body;
-
-    if (!data?.turningPoints?.length) {
-      return NextResponse.json(
-        { error: "Invalid onboarding data" },
-        { status: 400 }
-      );
-    }
-
-    const prompt = buildPrompt(data);
-
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8096,
-      system:
-        "You are a life pattern analyst. Output only a single valid JSON object. No markdown, no code blocks, no explanation, no text before or after the JSON.",
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const textContent = message.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map((block) => block.text)
-      .join("");
-
-    if (!textContent) {
-      return NextResponse.json(
-        { error: "No text content in response" },
-        { status: 500 }
-      );
-    }
-
-    // Extract outermost JSON object (strips any accidental wrapper text)
-    const start = textContent.indexOf("{");
-    const end = textContent.lastIndexOf("}");
-    if (start === -1 || end === -1) {
-      return NextResponse.json(
-        { error: "Invalid response format from Claude" },
-        { status: 500 }
-      );
-    }
-
-    const report = JSON.parse(textContent.slice(start, end + 1)) as ReportData;
-    report.generated_at = new Date().toISOString();
-
-    return NextResponse.json({ report });
-  } catch (error) {
-    if (error instanceof Anthropic.APIError) {
-      return NextResponse.json(
-        { error: `Claude API error: ${error.message}` },
-        { status: error.status ?? 500 }
-      );
-    }
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: "ANTHROPIC_API_KEY is not configured" },
+      { status: 500 }
+    );
   }
+
+  let data: OnboardingData;
+  try {
+    const body = (await req.json()) as { data: OnboardingData };
+    data = body.data;
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  if (!data?.turningPoints?.length) {
+    return NextResponse.json({ error: "Invalid onboarding data" }, { status: 400 });
+  }
+
+  const client = new Anthropic({ apiKey });
+  const prompt = buildPrompt(data);
+  const encoder = new TextEncoder();
+
+  // Stream Claude's response directly to the client.
+  // Assistant prefill with "{" forces Claude to output pure JSON from the start.
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        const anthropicStream = client.messages.stream({
+          model: "claude-sonnet-4-6",
+          max_tokens: 8096,
+          system:
+            "You are a life pattern analyst. Output only valid JSON. No markdown, no code fences, no explanation.",
+          messages: [
+            { role: "user", content: prompt },
+            { role: "assistant", content: "{" },
+          ],
+        });
+
+        // First character is always "{" from the prefill — send it immediately
+        controller.enqueue(encoder.encode("{"));
+
+        for await (const event of anthropicStream) {
+          if (
+            event.type === "content_block_delta" &&
+            event.delta.type === "text_delta"
+          ) {
+            controller.enqueue(encoder.encode(event.delta.text));
+          }
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        // Signal error to client via a special marker
+        controller.enqueue(encoder.encode(`\x00ERR:${msg}`));
+      }
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
 }
