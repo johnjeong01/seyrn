@@ -169,6 +169,88 @@ function ForecastBar({ year }: { year: ForecastYear }) {
   );
 }
 
+function FreeEnding({ report }: { report: ReportData }) {
+  const { sections } = report;
+  const predictedYear = sections.next_turning_point.predicted_year;
+  const energy = sections.next_turning_point.energy_forecast;
+  const isEven = predictedYear % 2 === 0;
+  const quarter =
+    energy >= 7 ? (isEven ? "Q1" : "Q2") :
+    energy >= 5 ? (isEven ? "Q2" : "Q3") :
+                  (isEven ? "Q3" : "Q4");
+
+  return (
+    <div
+      className="mt-12 p-8"
+      style={{
+        background: "rgba(201,168,76,0.03)",
+        border: "1px solid rgba(201,168,76,0.12)",
+        borderLeft: "3px solid var(--gold)",
+      }}
+    >
+      <p
+        className="font-sans text-xs tracking-[0.2em] uppercase mb-5"
+        style={{ color: "var(--rust)" }}
+      >
+        Pattern Warning
+      </p>
+
+      <p
+        className="font-sans font-light text-sm leading-relaxed mb-8"
+        style={{ color: "var(--warm)" }}
+      >
+        There is a specific behavior embedded in your pattern — one that has
+        reset your progress at every high-energy peak you&apos;ve experienced.
+        It doesn&apos;t feel like self-sabotage in the moment. It feels
+        reasonable. It appears in your data as{" "}
+        <span
+          className="font-serif italic"
+          style={{ color: "var(--cream)", filter: "blur(5px)", userSelect: "none" }}
+        >
+          {sections.recurring_themes.themes?.[0]?.title ?? "the avoidance pattern"}
+        </span>
+        . It has shaped every turning point you&apos;ve recorded.
+      </p>
+
+      <div
+        className="py-6 my-6"
+        style={{
+          borderTop: "1px solid rgba(201,168,76,0.12)",
+          borderBottom: "1px solid rgba(201,168,76,0.12)",
+        }}
+      >
+        <p
+          className="font-sans text-[10px] tracking-[0.3em] uppercase mb-3"
+          style={{ color: "var(--muted)" }}
+        >
+          Your next turning point
+        </p>
+        <p
+          className="font-serif font-light"
+          style={{
+            fontSize: "clamp(2.25rem, 5vw, 3rem)",
+            color: "var(--gold)",
+            lineHeight: 1,
+          }}
+        >
+          {quarter} {predictedYear}
+        </p>
+        <p className="font-sans text-xs mt-2" style={{ color: "var(--muted)" }}>
+          The trigger is already in motion.
+        </p>
+      </div>
+
+      <p
+        className="font-serif font-light text-lg leading-relaxed"
+        style={{ color: "var(--cream)", fontStyle: "italic" }}
+      >
+        Will you recognize it this time — or will you only understand what
+        happened after it&apos;s already over?
+      </p>
+    </div>
+  );
+}
+
 export default function ReportSections({ report, isPaid, turningPoints }: Props) {
   const { sections } = report;
   const delay = (n: number) => ({ animation: `fadeUp 0.8s ease-out ${n * 0.15}s both` });
@@ -213,6 +295,9 @@ export default function ReportSections({ report, isPaid, turningPoints }: Props)
           <BodyText key={i}>{para}</BodyText>
         ))}
       </div>
+
+      {/* Free report cliffhanger */}
+      {!isPaid && <FreeEnding report={report} />}
 
       {/* Paywall sentinel — IntersectionObserver watches this */}
       <div id="paywall-start" />
