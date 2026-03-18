@@ -1,11 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import type { OnboardingData } from "@/lib/onboarding-types";
-import type { ReportData } from "@/lib/report-types";
 
+export const runtime = "edge";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
-
 
 function buildPrompt(data: OnboardingData): string {
   const tpDescriptions = data.turningPoints
@@ -142,68 +141,63 @@ Return ONLY valid JSON matching this exact schema (no markdown, no explanation, 
 Include exactly 3 recurring themes, exactly 4 strategic moves, and exactly 5 forecast years (starting from current year + 1). The forecast_years energy values should tell a coherent story based on their patterns.`;
 }
 
-function extractJSON(text: string): string {
-  // Strip markdown code blocks if present
-  const stripped = text.replace(/```(?:json)?\n?/g, "").trim();
-  // Find the outermost JSON object
-  const start = stripped.indexOf("{");
-  const end = stripped.lastIndexOf("}");
-  if (start === -1 || end === -1) throw new Error("No JSON object found in response");
-  return stripped.slice(start, end + 1);
-}
-
 export async function POST(req: NextRequest) {
-  try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "ANTHROPIC_API_KEY is not configured" }, { status: 500 });
-    }
-
-    const client = new Anthropic({ apiKey });
-
-    const body = await req.json() as { data: OnboardingData };
-    const { data } = body;
-
-    if (!data || !data.turningPoints || data.turningPoints.length === 0) {
-      return NextResponse.json({ error: "Invalid onboarding data" }, { status: 400 });
-    }
-
-    const prompt = buildPrompt(data);
-
-    const message = await client.messages
-      .stream({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4096,
-        messages: [{ role: "user", content: prompt }],
-      })
-      .finalMessage();
-
-    // Extract text blocks only (skip thinking blocks)
-    const textContent = message.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map((block) => block.text)
-      .join("");
-
-    if (!textContent) {
-      return NextResponse.json({ error: "No text content in response" }, { status: 500 });
-    }
-
-    const jsonStr = extractJSON(textContent);
-    const report = JSON.parse(jsonStr) as ReportData;
-    report.generated_at = new Date().toISOString();
-
-    return NextResponse.json({ report });
-  } catch (error) {
-    console.error("Report generation error:", error);
-
-    if (error instanceof Anthropic.APIError) {
-      return NextResponse.json(
-        { error: `Claude API error: ${error.message}` },
-        { status: error.status ?? 500 }
-      );
-    }
-
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return new Response(
+      JSON.stringify({ error: "ANTHROPIC_API_KEY is not configured" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
+
+  let data: OnboardingData;
+  try {
+    const body = (await req.json()) as { data: OnboardingData };
+    data = body.data;
+  } catch {
+    return new Response(
+      JSON.stringify({ error: "Invalid request body" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  if (!data?.turningPoints?.length) {
+    return new Response(
+      JSON.stringify({ error: "Invalid onboarding data" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const client = new Anthropic({ apiKey });
+  const prompt = buildPrompt(data);
+  const encoder = new TextEncoder();
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        const anthropicStream = client.messages.stream({
+          model: "claude-sonnet-4-6",
+          max_tokens: 4096,
+          messages: [{ role: "user", content: prompt }],
+        });
+
+        for await (const event of anthropicStream) {
+          if (
+            event.type === "content_block_delta" &&
+            event.delta.type === "text_delta"
+          ) {
+            controller.enqueue(encoder.encode(event.delta.text));
+          }
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        controller.enqueue(encoder.encode(`\x00ERR:${msg}`));
+      }
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
 }
