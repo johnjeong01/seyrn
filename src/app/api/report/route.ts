@@ -1,6 +1,7 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import type { OnboardingData } from "@/lib/onboarding-types";
+import type { ReportData } from "@/lib/report-types";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -103,8 +104,8 @@ Return ONLY valid JSON matching this exact schema (no markdown, no explanation, 
     },
     "next_turning_point": {
       "headline": "Short headline about their predicted next pivot",
-      "predicted_year": <integer year, e.g. 2027>,
-      "energy_forecast": <integer 1-10>,
+      "predicted_year": 2027,
+      "energy_forecast": 7,
       "trigger": "One sentence: what category of event will likely trigger the next turning point",
       "body": "2-3 paragraphs analyzing what their next turning point will look and feel like, based on their patterns"
     },
@@ -130,7 +131,7 @@ Return ONLY valid JSON matching this exact schema (no markdown, no explanation, 
     "life_forecast": {
       "headline": "Short headline for the forecast",
       "forecast_years": [
-        { "year": <integer>, "energy": <integer 1-10>, "theme": "2-4 word theme for that year" }
+        { "year": 2026, "energy": 7, "theme": "2-4 word theme for that year" }
       ],
       "closing": "2-3 sentences of closing insight — make it memorable and personal"
     }
@@ -141,63 +142,71 @@ Include exactly 3 recurring themes, exactly 4 strategic moves, and exactly 5 for
 }
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: "ANTHROPIC_API_KEY is not configured" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  let data: OnboardingData;
   try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "ANTHROPIC_API_KEY is not configured" },
+        { status: 500 }
+      );
+    }
+
+    const client = new Anthropic({ apiKey });
+
     const body = (await req.json()) as { data: OnboardingData };
-    data = body.data;
-  } catch {
-    return new Response(
-      JSON.stringify({ error: "Invalid request body" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    const { data } = body;
+
+    if (!data?.turningPoints?.length) {
+      return NextResponse.json(
+        { error: "Invalid onboarding data" },
+        { status: 400 }
+      );
+    }
+
+    const prompt = buildPrompt(data);
+
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8096,
+      system:
+        "You are a life pattern analyst. Output only a single valid JSON object. No markdown, no code blocks, no explanation, no text before or after the JSON.",
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const textContent = message.content
+      .filter((block): block is Anthropic.TextBlock => block.type === "text")
+      .map((block) => block.text)
+      .join("");
+
+    if (!textContent) {
+      return NextResponse.json(
+        { error: "No text content in response" },
+        { status: 500 }
+      );
+    }
+
+    // Extract outermost JSON object (strips any accidental wrapper text)
+    const start = textContent.indexOf("{");
+    const end = textContent.lastIndexOf("}");
+    if (start === -1 || end === -1) {
+      return NextResponse.json(
+        { error: "Invalid response format from Claude" },
+        { status: 500 }
+      );
+    }
+
+    const report = JSON.parse(textContent.slice(start, end + 1)) as ReportData;
+    report.generated_at = new Date().toISOString();
+
+    return NextResponse.json({ report });
+  } catch (error) {
+    if (error instanceof Anthropic.APIError) {
+      return NextResponse.json(
+        { error: `Claude API error: ${error.message}` },
+        { status: error.status ?? 500 }
+      );
+    }
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  if (!data?.turningPoints?.length) {
-    return new Response(
-      JSON.stringify({ error: "Invalid onboarding data" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const client = new Anthropic({ apiKey });
-  const prompt = buildPrompt(data);
-  const encoder = new TextEncoder();
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      try {
-        const anthropicStream = client.messages.stream({
-          model: "claude-sonnet-4-6",
-          max_tokens: 8096,
-          system: "You are a life pattern analyst. Output only a single valid JSON object with no markdown, no code blocks, no explanation, and no trailing text. Every string value must be properly escaped.",
-          messages: [{ role: "user", content: prompt }],
-        });
-
-        for await (const event of anthropicStream) {
-          if (
-            event.type === "content_block_delta" &&
-            event.delta.type === "text_delta"
-          ) {
-            controller.enqueue(encoder.encode(event.delta.text));
-          }
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Unknown error";
-        controller.enqueue(encoder.encode(`\x00ERR:${msg}`));
-      }
-      controller.close();
-    },
-  });
-
-  return new Response(stream, {
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  });
 }

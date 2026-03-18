@@ -220,38 +220,9 @@ export default function ReportClient() {
           throw new Error(errorMsg);
         }
 
-        // Read streamed text response
-        if (!res.body) throw new Error("No response body");
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let text = "";
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          text += decoder.decode(value, { stream: true });
-        }
-        text += decoder.decode(); // flush remaining bytes
-
-        // Check for server-side error sentinel
-        const errIdx = text.indexOf("\x00ERR:");
-        if (errIdx !== -1) throw new Error(text.slice(errIdx + 5));
-
-        // Extract the outermost JSON object
-        const start = text.indexOf("{");
-        const end = text.lastIndexOf("}");
-        if (start === -1 || end === -1) throw new Error("Invalid response format");
-        const jsonStr = text.slice(start, end + 1);
-
-        let report: ReportData;
-        try {
-          report = JSON.parse(jsonStr) as ReportData;
-        } catch {
-          throw new Error("Report generation failed — please try again");
-        }
-        report.generated_at = new Date().toISOString();
-
-        localStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(report));
-        setReport(report);
+        const body = (await res.json()) as { report: ReportData };
+        localStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(body.report));
+        setReport(body.report);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Unknown error";
         setError(msg);
