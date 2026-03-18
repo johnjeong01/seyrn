@@ -6,9 +6,6 @@ import type { ReportData } from "@/lib/report-types";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
 function buildPrompt(data: OnboardingData): string {
   const tpDescriptions = data.turningPoints
@@ -157,6 +154,13 @@ function extractJSON(text: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: "ANTHROPIC_API_KEY is not configured" }, { status: 500 });
+    }
+
+    const client = new Anthropic({ apiKey });
+
     const body = await req.json() as { data: OnboardingData };
     const { data } = body;
 
