@@ -68,6 +68,7 @@ export interface ReportSections {
 export interface ReportData {
   pattern_name: string;
   pattern_archetype: string;
+  share_sentences?: [string, string];
   sections: ReportSections;
   generated_at: string;
 }

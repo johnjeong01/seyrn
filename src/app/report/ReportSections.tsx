@@ -8,6 +8,7 @@ interface Props {
   report: ReportData;
   isPaid: boolean;
   turningPoints: TurningPoint[];
+  currentSeason?: string | null;
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -251,7 +252,7 @@ function FreeEnding({ report }: { report: ReportData }) {
   );
 }
 
-export default function ReportSections({ report, isPaid, turningPoints }: Props) {
+export default function ReportSections({ report, isPaid, turningPoints, currentSeason }: Props) {
   const { sections } = report;
   const delay = (n: number) => ({ animation: `fadeUp 0.8s ease-out ${n * 0.15}s both` });
 
@@ -282,7 +283,7 @@ export default function ReportSections({ report, isPaid, turningPoints }: Props)
           {report.pattern_archetype}
         </p>
 
-        <ShareCard report={report} turningPoints={turningPoints} />
+        <ShareCard report={report} turningPoints={turningPoints} currentSeason={currentSeason} />
       </div>
 
       <div className="divider-gold" />

@@ -83,6 +83,7 @@ Return a single JSON object with this exact structure. Include exactly 3 themes,
 {
   "pattern_name": "3-5 word phrase",
   "pattern_archetype": "One sentence",
+  "share_sentences": ["First resonant insight about this specific person's pattern — must feel so precise it stops a reader mid-scroll", "Second insight — a truth about how they move through life that makes any observer think: I wonder what mine says"],
   "sections": {
     "life_pattern": { "headline": "under 12 words", "body": "3-4 paragraphs" },
     "recurring_themes": {

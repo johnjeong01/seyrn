@@ -7,17 +7,18 @@ import type { TurningPoint } from "@/lib/onboarding-types";
 interface Props {
   report: ReportData;
   turningPoints: TurningPoint[];
+  currentSeason?: string | null;
 }
 
-const SQ = 1080; // Square (Instagram)
-const LW = 1200; // Landscape width (Twitter/OG)
-const LH = 630;  // Landscape height
+const W = 1080;
+const H = 1080;
+const PAD = 68;
 
-// ── Helpers ─────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────
 
-function addGrain(ctx: CanvasRenderingContext2D, W: number, H: number) {
-  for (let i = 0; i < 1800; i++) {
-    ctx.fillStyle = `rgba(255,255,255,${0.01 + Math.random() * 0.04})`;
+function addGrain(ctx: CanvasRenderingContext2D) {
+  for (let i = 0; i < 2200; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${0.006 + Math.random() * 0.03})`;
     ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
   }
 }
@@ -38,14 +39,14 @@ function drawRedaction(
   w: number,
   h: number
 ) {
-  ctx.fillStyle = "rgba(201,168,76,0.07)";
+  ctx.fillStyle = "rgba(201,168,76,0.05)";
   ctx.fillRect(x - 4, y - 2, w + 8, h + 4);
-  ctx.fillStyle = "rgba(201,168,76,0.18)";
+  ctx.fillStyle = "rgba(201,168,76,0.14)";
   ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = "rgba(201,168,76,0.32)";
-  ctx.fillRect(x + 6, y + h * 0.25, w - 12, h * 0.35);
-  ctx.fillStyle = "rgba(201,168,76,0.48)";
-  ctx.fillRect(x + 10, y + h * 0.35, w - 20, h * 0.2);
+  ctx.fillStyle = "rgba(201,168,76,0.26)";
+  ctx.fillRect(x + 8, y + h * 0.25, w - 16, h * 0.35);
+  ctx.fillStyle = "rgba(201,168,76,0.4)";
+  ctx.fillRect(x + 14, y + h * 0.35, w - 28, h * 0.2);
 }
 
 function drawWaveform(
@@ -87,8 +88,8 @@ function drawWaveform(
     ctx.lineTo(points[points.length - 1].x, yB);
     ctx.closePath();
     const g = ctx.createLinearGradient(0, yT, 0, yB);
-    g.addColorStop(0, "rgba(201,168,76,0.07)");
-    g.addColorStop(1, "rgba(201,168,76,0.01)");
+    g.addColorStop(0, "rgba(201,168,76,0.055)");
+    g.addColorStop(1, "rgba(201,168,76,0.008)");
     ctx.fillStyle = g;
     ctx.fill();
 
@@ -99,7 +100,7 @@ function drawWaveform(
       const cpX = (points[i].x + points[i + 1].x) / 2;
       ctx.bezierCurveTo(cpX, points[i].y, cpX, points[i + 1].y, points[i + 1].x, points[i + 1].y);
     }
-    ctx.strokeStyle = "rgba(201,168,76,0.55)";
+    ctx.strokeStyle = "rgba(201,168,76,0.48)";
     ctx.lineWidth = 1.5;
     ctx.stroke();
   }
@@ -111,32 +112,30 @@ function drawWaveform(
     const dotCol = isLast ? "#c9a84c" : col;
 
     if (isLast) {
-      // Glow rings
       for (let r = 3; r >= 0; r--) {
         ctx.beginPath();
-        ctx.arc(pt.x, pt.y, 6 + r * 8, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(201,168,76,${0.05 - r * 0.01})`;
+        ctx.arc(pt.x, pt.y, 7 + r * 9, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(201,168,76,${0.055 - r * 0.011})`;
         ctx.lineWidth = 1;
         ctx.stroke();
       }
     }
 
     ctx.beginPath();
-    ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+    ctx.arc(pt.x, pt.y, isLast ? 6 : 4.5, 0, Math.PI * 2);
     ctx.fillStyle = dotCol;
     ctx.fill();
 
     if (!isLast) {
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 9, 0, Math.PI * 2);
-      ctx.strokeStyle = `${col}55`;
+      ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
+      ctx.strokeStyle = `${col}44`;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
   });
 }
 
-/** Auto-fits pattern name into maxWidth, returns {lines, size} */
 function fitName(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -144,7 +143,7 @@ function fitName(
   maxH: number
 ): { lines: string[]; size: number } {
   const words = text.split(" ");
-  for (let size = 160; size >= 40; size -= 4) {
+  for (let size = 148; size >= 36; size -= 4) {
     ctx.font = `300 ${size}px 'Cormorant Garamond', Georgia, serif`;
     const lh = size * 1.12;
     const lines: string[] = [];
@@ -159,267 +158,315 @@ function fitName(
       }
     }
     if (cur) lines.push(cur);
-    const fit =
+    if (
       lines.every((l) => ctx.measureText(l).width <= maxW) &&
       lines.length <= 3 &&
-      lines.length * lh <= maxH;
-    if (fit) return { lines, size };
+      lines.length * lh <= maxH
+    ) {
+      return { lines, size };
+    }
   }
-  return { lines: [text.slice(0, 22)], size: 40 };
+  return { lines: [text.slice(0, 22)], size: 36 };
 }
 
-// ── Square card (1080×1080) ─────────────────────────────────────
+// ── Share data ────────────────────────────────────────────────────
 
-async function buildSquareCard(
+interface ShareData {
+  n: string;
+  a: string;
+  s: [string, string] | ["", ""];
+  y: number;
+  m: number | null;
+  sea: string | null;
+  tps: Array<{ yr: number; e: number }>;
+}
+
+function buildShareData(
+  report: ReportData,
+  tps: TurningPoint[],
+  season: string | null
+): ShareData {
+  return {
+    n: report.pattern_name,
+    a: report.pattern_archetype.slice(0, 120),
+    s: report.share_sentences ?? ["", ""],
+    y: report.sections.next_turning_point.predicted_year,
+    m: avgIntervalMonths(tps),
+    sea: season,
+    tps: tps
+      .filter((tp) => tp.year !== null)
+      .map((tp) => ({ yr: tp.year as number, e: tp.energyLevel })),
+  };
+}
+
+function buildShareUrl(data: ShareData): string {
+  const encoded = encodeURIComponent(JSON.stringify(data));
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://seyrn.app";
+  return `${origin}/r?d=${encoded}`;
+}
+
+// ── Canvas card builder ──────────────────────────────────────────
+
+async function buildCard(
   canvas: HTMLCanvasElement,
   report: ReportData,
-  tps: TurningPoint[]
+  tps: TurningPoint[],
+  season: string | null
 ): Promise<string> {
   await document.fonts.ready;
-  const W = SQ, H = SQ, PAD = 64;
-
   canvas.width = W * 2;
   canvas.height = H * 2;
   const ctx = canvas.getContext("2d")!;
   ctx.scale(2, 2);
 
+  type ExtCtx = CanvasRenderingContext2D & { letterSpacing: string };
+  const setLS = (v: string) => {
+    try {
+      (ctx as ExtCtx).letterSpacing = v;
+    } catch {
+      /* noop */
+    }
+  };
+
   // Background
-  ctx.fillStyle = "#1a1814";
+  ctx.fillStyle = "#0f0e0c";
   ctx.fillRect(0, 0, W, H);
+  addGrain(ctx);
 
-  // Grain
-  addGrain(ctx, W, H);
+  // Gold top border (2px)
+  ctx.fillStyle = "#c9a84c";
+  ctx.fillRect(0, 0, W, 2);
 
-  // Wordmark
+  // ── SEYRN wordmark ──
   ctx.fillStyle = "#c9a84c";
   ctx.font = "500 11px 'DM Sans', system-ui, sans-serif";
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0.32em"; } catch { /* noop */ }
-  ctx.fillText("SEYRN", PAD, 50);
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0px"; } catch { /* noop */ }
+  setLS("0.32em");
+  ctx.fillText("SEYRN", PAD, 52);
+  setLS("0px");
 
-  // Gold separator below wordmark
-  ctx.fillStyle = "rgba(201,168,76,0.22)";
-  ctx.fillRect(PAD, 64, W - PAD * 2, 1);
+  // Thin separator
+  ctx.fillStyle = "rgba(201,168,76,0.18)";
+  ctx.fillRect(PAD, 67, W - PAD * 2, 1);
 
-  // Label
+  // ── YOUR LIFE PATTERN ──
   ctx.font = "300 10px 'DM Sans', system-ui, sans-serif";
   ctx.fillStyle = "#7a7268";
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0.35em"; } catch { /* noop */ }
+  setLS("0.35em");
   ctx.fillText("YOUR LIFE PATTERN", PAD, 90);
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0px"; } catch { /* noop */ }
+  setLS("0px");
 
-  // Pattern name
+  // ── Pattern name (zone: y=116 → y=392, 276px) ──
   const maxNameW = W - PAD * 2;
-  const maxNameH = 340; // name zone height
-  const { lines, size } = fitName(ctx, report.pattern_name, maxNameW, maxNameH);
+  const { lines, size } = fitName(ctx, report.pattern_name, maxNameW, 272);
   const lh = size * 1.12;
-
   ctx.save();
-  ctx.shadowColor = "rgba(201,168,76,0.22)";
-  ctx.shadowBlur = 36;
+  ctx.shadowColor = "rgba(201,168,76,0.28)";
+  ctx.shadowBlur = 44;
   ctx.fillStyle = "#f5f0e8";
   ctx.font = `300 ${size}px 'Cormorant Garamond', Georgia, serif`;
-  const nameStartY = 120 + size;
+  const nameStartY = 116 + size;
   lines.forEach((line, i) => ctx.fillText(line, PAD, nameStartY + i * lh));
   ctx.restore();
 
-  // Waveform
-  const waveTop = 520;
-  const waveBot = 700;
-  drawWaveform(ctx, tps, PAD, W - PAD, waveTop, waveBot);
+  // ── Archetype ──
+  ctx.font = "300 15px 'DM Sans', system-ui, sans-serif";
+  ctx.fillStyle = "#7a7268";
+  const arch =
+    report.pattern_archetype.length > 88
+      ? report.pattern_archetype.slice(0, 85) + "…"
+      : report.pattern_archetype;
+  ctx.fillText(arch, PAD, 422);
 
-  // Separator
-  ctx.fillStyle = "rgba(201,168,76,0.15)";
-  ctx.fillRect(PAD, 728, W - PAD * 2, 1);
+  // ── Waveform (y=460 → y=610) ──
+  drawWaveform(ctx, tps, PAD, W - PAD, 460, 610);
 
-  // Stat line
+  // ── Gold separator ──
+  ctx.fillStyle = "rgba(201,168,76,0.14)";
+  ctx.fillRect(PAD, 636, W - PAD * 2, 1);
+
+  // ── Share sentences ──
+  const s = report.share_sentences;
+  if (s && s[0] && s[1]) {
+    ctx.save();
+    ctx.font = "italic 300 20px 'Cormorant Garamond', Georgia, serif";
+    // Truncate so it won't overflow the canvas width
+    const maxSentW = W - PAD * 2 - 10;
+    const trunc = (t: string, limit: number) =>
+      ctx.measureText(t).width > limit ? t.slice(0, 78) + "…" : t;
+
+    ctx.fillStyle = "#f5f0e8";
+    ctx.fillText(`"${trunc(s[0], maxSentW)}"`, PAD, 682);
+    ctx.fillStyle = "#e8dfd0";
+    ctx.fillText(`"${trunc(s[1], maxSentW)}"`, PAD, 726);
+    ctx.restore();
+  } else {
+    // Fallback
+    ctx.save();
+    ctx.font = "italic 300 20px 'Cormorant Garamond', Georgia, serif";
+    ctx.fillStyle = "#f5f0e8";
+    ctx.fillText(`"${arch}"`, PAD, 704);
+    ctx.restore();
+  }
+
+  // ── Data row ──
   const months = avgIntervalMonths(tps);
   const validCount = tps.filter((tp) => tp.year !== null).length;
-  const statText = months
-    ? `Energy peaks every ${months} months.`
-    : `${validCount} turning points. One pattern.`;
-  ctx.font = "300 17px 'DM Sans', system-ui, sans-serif";
-  ctx.fillStyle = "#f5f0e8";
-  ctx.fillText(statText, PAD, 772);
+  const cycleVal = months ? `Every ${months} months` : `${validCount} turning points`;
+  const seasonVal = season
+    ? season.charAt(0).toUpperCase() + season.slice(1)
+    : null;
 
-  // Next turning point — redacted
-  ctx.font = "300 10px 'DM Sans', system-ui, sans-serif";
+  // Left: energy cycle
+  ctx.font = "300 9px 'DM Sans', system-ui, sans-serif";
   ctx.fillStyle = "#7a7268";
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0.18em"; } catch { /* noop */ }
-  ctx.fillText("NEXT TURNING POINT", PAD, 820);
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0px"; } catch { /* noop */ }
-  drawRedaction(ctx, PAD, 830, 92, 22);
+  setLS("0.18em");
+  ctx.fillText("ENERGY CYCLE", PAD, 782);
+  setLS("0px");
+  ctx.font = "300 14px 'DM Sans', system-ui, sans-serif";
+  ctx.fillStyle = "#f5f0e8";
+  ctx.fillText(cycleVal, PAD, 802);
 
-  // Footer line
-  ctx.fillStyle = "rgba(201,168,76,0.12)";
-  ctx.fillRect(PAD, H - 54, W - PAD * 2, 1);
+  // Right: current season
+  if (seasonVal) {
+    const rightX = PAD + 360;
+    ctx.font = "300 9px 'DM Sans', system-ui, sans-serif";
+    ctx.fillStyle = "#7a7268";
+    setLS("0.18em");
+    ctx.fillText("CURRENT SEASON", rightX, 782);
+    setLS("0px");
+    ctx.font = "300 14px 'DM Sans', system-ui, sans-serif";
+    ctx.fillStyle = "#f5f0e8";
+    ctx.fillText(seasonVal, rightX, 802);
+  }
 
-  // Footer text
+  // ── NEXT TURNING POINT (redacted) ──
+  ctx.font = "300 9px 'DM Sans', system-ui, sans-serif";
+  ctx.fillStyle = "#7a7268";
+  setLS("0.18em");
+  ctx.fillText("NEXT TURNING POINT", PAD, 850);
+  setLS("0px");
+  drawRedaction(ctx, PAD, 860, 260, 24);
+
+  // ── PATTERN WARNING (redacted) ──
+  ctx.font = "300 9px 'DM Sans', system-ui, sans-serif";
+  ctx.fillStyle = "#7a7268";
+  setLS("0.18em");
+  ctx.fillText("PATTERN WARNING", PAD, 912);
+  setLS("0px");
+  drawRedaction(ctx, PAD, 922, 220, 24);
+
+  // ── Footer separator ──
+  ctx.fillStyle = "rgba(201,168,76,0.11)";
+  ctx.fillRect(PAD, 984, W - PAD * 2, 1);
+
+  // ── Footer ──
   ctx.font = "300 13px 'DM Sans', system-ui, sans-serif";
   ctx.fillStyle = "#7a7268";
-  ctx.fillText("seyrn.app", PAD, H - 24);
+  ctx.fillText("seyrn.app", PAD, 1030);
 
   ctx.font = "italic 300 18px 'Cormorant Garamond', Georgia, serif";
   ctx.fillStyle = "#c9a84c";
   const tagW = ctx.measureText("What's yours?").width;
-  ctx.fillText("What's yours?", W - PAD - tagW, H - 24);
+  ctx.fillText("What's yours?", W - PAD - tagW, 1030);
 
   return canvas.toDataURL("image/png");
 }
 
-// ── Landscape card (1200×630) ───────────────────────────────────
+// ── Component ────────────────────────────────────────────────────
 
-async function buildLandscapeCard(
-  canvas: HTMLCanvasElement,
-  report: ReportData,
-  tps: TurningPoint[]
-): Promise<string> {
-  await document.fonts.ready;
-  const W = LW, H = LH, PAD = 56;
-
-  canvas.width = W * 2;
-  canvas.height = H * 2;
-  const ctx = canvas.getContext("2d")!;
-  ctx.scale(2, 2);
-
-  // Background
-  ctx.fillStyle = "#1a1814";
-  ctx.fillRect(0, 0, W, H);
-  addGrain(ctx, W, H);
-
-  // Vertical divider (left/right split at 54%)
-  const split = Math.round(W * 0.54);
-  ctx.fillStyle = "rgba(201,168,76,0.07)";
-  ctx.fillRect(split, 20, 1, H - 40);
-
-  // Wordmark
-  ctx.fillStyle = "#c9a84c";
-  ctx.font = "500 10px 'DM Sans', system-ui, sans-serif";
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0.3em"; } catch { /* noop */ }
-  ctx.fillText("SEYRN", PAD, 44);
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0px"; } catch { /* noop */ }
-
-  ctx.fillStyle = "rgba(201,168,76,0.2)";
-  ctx.fillRect(PAD, 56, split - PAD - 20, 1);
-
-  // Label
-  ctx.font = "300 9px 'DM Sans', system-ui, sans-serif";
-  ctx.fillStyle = "#7a7268";
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0.32em"; } catch { /* noop */ }
-  ctx.fillText("YOUR LIFE PATTERN", PAD, 76);
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0px"; } catch { /* noop */ }
-
-  // Pattern name
-  const maxNameW = split - PAD - 24;
-  const { lines, size } = fitName(ctx, report.pattern_name, maxNameW, 280);
-  const lh = size * 1.1;
-  ctx.save();
-  ctx.shadowColor = "rgba(201,168,76,0.2)";
-  ctx.shadowBlur = 28;
-  ctx.fillStyle = "#f5f0e8";
-  ctx.font = `300 ${size}px 'Cormorant Garamond', Georgia, serif`;
-  const nY = 96 + size;
-  lines.forEach((l, i) => ctx.fillText(l, PAD, nY + i * lh));
-  ctx.restore();
-
-  // Stats (left side, below name)
-  const months = avgIntervalMonths(tps);
-  const validCount = tps.filter((tp) => tp.year !== null).length;
-  const statText = months
-    ? `Energy peaks every ${months} months.`
-    : `${validCount} turning points. One pattern.`;
-  ctx.font = "300 15px 'DM Sans', system-ui, sans-serif";
-  ctx.fillStyle = "#f5f0e8";
-  ctx.fillText(statText, PAD, 480);
-
-  // Redacted TP
-  ctx.font = "300 9px 'DM Sans', system-ui, sans-serif";
-  ctx.fillStyle = "#7a7268";
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0.15em"; } catch { /* noop */ }
-  ctx.fillText("NEXT TURNING POINT", PAD, 520);
-  try { (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0px"; } catch { /* noop */ }
-  drawRedaction(ctx, PAD, 530, 80, 18);
-
-  // Waveform (right side)
-  drawWaveform(ctx, tps, split + 24, W - PAD, 100, 510);
-
-  // Footer
-  ctx.fillStyle = "rgba(201,168,76,0.12)";
-  ctx.fillRect(PAD, H - 46, W - PAD * 2, 1);
-
-  ctx.font = "300 12px 'DM Sans', system-ui, sans-serif";
-  ctx.fillStyle = "#7a7268";
-  ctx.fillText("seyrn.app", PAD, H - 18);
-
-  ctx.font = "italic 300 16px 'Cormorant Garamond', Georgia, serif";
-  ctx.fillStyle = "#c9a84c";
-  const tw = ctx.measureText("What's yours?").width;
-  ctx.fillText("What's yours?", W - PAD - tw, H - 18);
-
-  return canvas.toDataURL("image/png");
-}
-
-// ── Component ───────────────────────────────────────────────────
-
-export default function ShareCard({ report, turningPoints }: Props) {
-  const squareRef = useRef<HTMLCanvasElement>(null);
-  const landRef = useRef<HTMLCanvasElement>(null);
+export default function ShareCard({ report, turningPoints, currentSeason }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [squareUrl, setSquareUrl] = useState<string | null>(null);
-  const [landUrl, setLandUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [format, setFormat] = useState<"square" | "land">("square");
+  const [copied, setCopied] = useState(false);
 
-  const canShare =
+  const shareData = buildShareData(report, turningPoints, currentSeason ?? null);
+  const shareUrl = typeof window !== "undefined" ? buildShareUrl(shareData) : "";
+
+  const canNativeShare =
     typeof navigator !== "undefined" &&
     typeof navigator.share === "function" &&
     typeof navigator.canShare === "function";
 
-  const handleShare = useCallback(async () => {
-    if (!squareRef.current || !landRef.current) return;
+  const handleOpen = useCallback(async () => {
+    if (!canvasRef.current) return;
     setGenerating(true);
     try {
-      const [sq, la] = await Promise.all([
-        buildSquareCard(squareRef.current, report, turningPoints),
-        buildLandscapeCard(landRef.current, report, turningPoints),
-      ]);
-      setSquareUrl(sq);
-      setLandUrl(la);
+      const url = await buildCard(
+        canvasRef.current,
+        report,
+        turningPoints,
+        currentSeason ?? null
+      );
+      setImageUrl(url);
       setModalOpen(true);
     } finally {
       setGenerating(false);
     }
-  }, [report, turningPoints]);
+  }, [report, turningPoints, currentSeason]);
 
   const handleDownload = useCallback(() => {
-    const url = format === "square" ? squareUrl : landUrl;
-    if (!url) return;
+    if (!imageUrl) return;
     const a = document.createElement("a");
-    a.href = url;
-    a.download = format === "square" ? "seyrn-pattern-1080.png" : "seyrn-pattern-1200x630.png";
+    a.href = imageUrl;
+    a.download = "seyrn-pattern.png";
     a.click();
-  }, [format, squareUrl, landUrl]);
+  }, [imageUrl]);
+
+  const handleCopyLink = useCallback(async () => {
+    const url = buildShareUrl(buildShareData(report, turningPoints, currentSeason ?? null));
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      // Fallback: select text
+    }
+  }, [report, turningPoints, currentSeason]);
+
+  const handleShareX = useCallback(() => {
+    const text = `My life pattern: "${report.pattern_name}" — ${report.pattern_archetype.slice(0, 80)}\n\nFind yours:`;
+    const url = buildShareUrl(buildShareData(report, turningPoints, currentSeason ?? null));
+    const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(xUrl, "_blank", "noopener,noreferrer");
+  }, [report, turningPoints, currentSeason]);
 
   const handleNativeShare = useCallback(async () => {
-    const ref = format === "square" ? squareRef.current : landRef.current;
-    if (!ref) return;
-    ref.toBlob(async (blob) => {
+    if (!canvasRef.current) return;
+    canvasRef.current.toBlob(async (blob) => {
       if (!blob) return;
       const file = new File([blob], "seyrn-pattern.png", { type: "image/png" });
       try {
-        await navigator.share({ files: [file], title: report.pattern_name, text: report.pattern_archetype });
-      } catch { /* cancelled */ }
+        await navigator.share({
+          files: [file],
+          title: report.pattern_name,
+          text: report.pattern_archetype,
+        });
+      } catch {
+        /* cancelled */
+      }
     }, "image/png");
-  }, [format, report]);
+  }, [report]);
 
-  const previewUrl = format === "square" ? squareUrl : landUrl;
+  const btnBase: React.CSSProperties = {
+    fontFamily: "inherit",
+    fontSize: "0.65rem",
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    padding: "0.65rem 1.25rem",
+    cursor: "pointer",
+    transition: "background 0.15s, color 0.15s",
+    whiteSpace: "nowrap",
+  };
 
   return (
     <>
       <div className="text-center mt-10">
         <button
-          onClick={handleShare}
+          onClick={handleOpen}
           disabled={generating}
           className="font-sans text-xs tracking-widest uppercase transition-all"
           style={{
@@ -430,8 +477,12 @@ export default function ShareCard({ report, turningPoints }: Props) {
             cursor: generating ? "wait" : "pointer",
             letterSpacing: "0.14em",
           }}
-          onMouseEnter={(e) => { if (!generating) e.currentTarget.style.background = "rgba(245,240,232,0.08)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          onMouseEnter={(e) => {
+            if (!generating) e.currentTarget.style.background = "rgba(245,240,232,0.08)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+          }}
         >
           {generating ? "Generating…" : "Share your pattern"}
         </button>
@@ -440,87 +491,191 @@ export default function ShareCard({ report, turningPoints }: Props) {
         </p>
       </div>
 
-      <canvas ref={squareRef} style={{ display: "none" }} />
-      <canvas ref={landRef} style={{ display: "none" }} />
+      <canvas ref={canvasRef} style={{ display: "none" }} />
 
-      {modalOpen && squareUrl && (
+      {/* Copied toast */}
+      {copied && (
         <div
           style={{
-            position: "fixed", inset: 0, background: "rgba(15,14,12,0.92)",
-            zIndex: 100, display: "flex", alignItems: "center",
-            justifyContent: "center", padding: "1.5rem",
+            position: "fixed",
+            bottom: "5rem",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "var(--deep)",
+            border: "1px solid rgba(201,168,76,0.3)",
+            padding: "0.6rem 1.5rem",
+            zIndex: 200,
+            animation: "fadeUp 0.25s ease-out forwards",
           }}
-          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
+        >
+          <p className="font-sans text-xs tracking-widest uppercase" style={{ color: "var(--gold)" }}>
+            Link copied
+          </p>
+        </div>
+      )}
+
+      {/* Modal */}
+      {modalOpen && imageUrl && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15,14,12,0.94)",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1.5rem",
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setModalOpen(false);
+          }}
         >
           <div
             style={{
-              background: "var(--deep)", border: "1px solid rgba(201,168,76,0.2)",
-              padding: "2rem", maxWidth: "640px", width: "100%",
+              background: "var(--deep)",
+              border: "1px solid rgba(201,168,76,0.18)",
+              padding: "1.75rem",
+              maxWidth: "520px",
+              width: "100%",
               animation: "fadeUp 0.3s ease-out forwards",
             }}
           >
-            {/* Format toggle */}
-            <div className="flex gap-2 mb-4" style={{ justifyContent: "center" }}>
-              {(["square", "land"] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFormat(f)}
-                  className="font-sans text-xs tracking-widest uppercase"
-                  style={{
-                    padding: "0.35rem 1rem",
-                    background: format === f ? "var(--gold)" : "transparent",
-                    color: format === f ? "var(--ink)" : "var(--muted)",
-                    border: format === f ? "none" : "1px solid rgba(255,255,255,0.1)",
-                    cursor: "pointer",
-                  }}
-                >
-                  {f === "square" ? "1:1 Square" : "16:9 Landscape"}
-                </button>
-              ))}
-            </div>
+            {/* Card preview */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt="Your life pattern card"
+              style={{ width: "100%", display: "block", borderRadius: 1 }}
+            />
 
-            {previewUrl && (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={previewUrl}
-                alt="Your life pattern card"
-                style={{ width: "100%", display: "block", borderRadius: 1 }}
-              />
-            )}
-
-            <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem", justifyContent: "center", flexWrap: "wrap" }}>
+            {/* Actions */}
+            <div
+              style={{
+                display: "flex",
+                gap: "0.75rem",
+                marginTop: "1.25rem",
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Download PNG */}
               <button
                 onClick={handleDownload}
-                className="font-sans text-xs tracking-widest uppercase transition-all"
-                style={{ background: "var(--gold)", color: "var(--ink)", border: "none", padding: "0.65rem 1.5rem", cursor: "pointer", fontWeight: 500 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gold-light)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gold)"; }}
+                className="font-sans"
+                style={{
+                  ...btnBase,
+                  background: "var(--gold)",
+                  color: "var(--ink)",
+                  border: "none",
+                  fontWeight: 500,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--gold-light)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--gold)";
+                }}
               >
                 Download PNG
               </button>
 
-              {canShare && (
+              {/* Copy Link */}
+              <button
+                onClick={handleCopyLink}
+                className="font-sans"
+                style={{
+                  ...btnBase,
+                  background: "transparent",
+                  color: copied ? "var(--gold)" : "var(--cream)",
+                  border: `1px solid ${copied ? "var(--gold)" : "rgba(245,240,232,0.35)"}`,
+                }}
+                onMouseEnter={(e) => {
+                  if (!copied) e.currentTarget.style.background = "rgba(245,240,232,0.07)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                {copied ? "Copied!" : "Copy Link"}
+              </button>
+
+              {/* Share to X */}
+              <button
+                onClick={handleShareX}
+                className="font-sans"
+                style={{
+                  ...btnBase,
+                  background: "transparent",
+                  color: "var(--muted)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--cream)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "var(--muted)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                }}
+              >
+                Share to X
+              </button>
+
+              {/* Native share (mobile) */}
+              {canNativeShare && (
                 <button
                   onClick={handleNativeShare}
-                  className="font-sans text-xs tracking-widest uppercase transition-all"
-                  style={{ background: "transparent", color: "var(--cream)", border: "1px solid var(--cream)", padding: "0.65rem 1.5rem", cursor: "pointer" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,240,232,0.08)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  className="font-sans"
+                  style={{
+                    ...btnBase,
+                    background: "transparent",
+                    color: "var(--muted)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "var(--cream)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "var(--muted)";
+                  }}
                 >
                   Share
                 </button>
               )}
 
+              {/* Close */}
               <button
                 onClick={() => setModalOpen(false)}
                 className="font-sans text-xs transition-colors"
-                style={{ background: "transparent", border: "none", color: "var(--muted)", cursor: "pointer", padding: "0.65rem 0.5rem" }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--cream)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted)"; }}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--muted)",
+                  cursor: "pointer",
+                  padding: "0.65rem 0.5rem",
+                  letterSpacing: "0.1em",
+                  fontSize: "0.65rem",
+                  textTransform: "uppercase",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--cream)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "var(--muted)";
+                }}
               >
                 Close
               </button>
             </div>
+
+            {/* Shared link preview */}
+            <p
+              className="font-sans text-center mt-4"
+              style={{ color: "var(--muted)", fontSize: "0.6rem", letterSpacing: "0.05em" }}
+            >
+              {shareUrl.slice(0, 72)}{shareUrl.length > 72 ? "…" : ""}
+            </p>
           </div>
         </div>
       )}

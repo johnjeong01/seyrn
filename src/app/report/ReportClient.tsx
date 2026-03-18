@@ -374,7 +374,7 @@ export default function ReportClient() {
         )}
 
         {report && !loading && (
-          <ReportSections report={report} isPaid={isPaid} turningPoints={data.turningPoints} />
+          <ReportSections report={report} isPaid={isPaid} turningPoints={data.turningPoints} currentSeason={data.currentSeason} />
         )}
       </div>
 
