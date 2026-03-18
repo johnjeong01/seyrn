@@ -210,8 +210,14 @@ export default function ReportClient() {
         });
 
         if (!res.ok) {
-          const body = (await res.json()) as { error?: string };
-          throw new Error(body.error ?? `Server error ${res.status}`);
+          let errorMsg = `Server error ${res.status}`;
+          try {
+            const body = (await res.json()) as { error?: string };
+            if (body.error) errorMsg = body.error;
+          } catch {
+            // non-JSON response (e.g. Vercel HTML error page)
+          }
+          throw new Error(errorMsg);
         }
 
         const body = (await res.json()) as { report: ReportData };
