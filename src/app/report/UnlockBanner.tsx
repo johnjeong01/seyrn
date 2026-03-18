@@ -10,6 +10,7 @@ interface Props {
 export default function UnlockBanner({ show, predictedYear }: Props) {
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState<"one-time" | "monthly" | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!show) return;
@@ -34,6 +35,7 @@ export default function UnlockBanner({ show, predictedYear }: Props) {
 
   async function handleCheckout(plan: "one-time" | "monthly") {
     setLoading(plan);
+    setCheckoutError(null);
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -44,10 +46,11 @@ export default function UnlockBanner({ show, predictedYear }: Props) {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        console.error("Checkout error:", data.error);
+        setCheckoutError(data.error ?? "Checkout failed. Please try again.");
         setLoading(null);
       }
     } catch {
+      setCheckoutError("Network error. Please try again.");
       setLoading(null);
     }
   }
@@ -94,6 +97,16 @@ export default function UnlockBanner({ show, predictedYear }: Props) {
             Predicted {yearText} — unlock to see the full forecast
           </p>
         </div>
+
+        {/* Checkout error */}
+        {checkoutError && (
+          <p
+            className="w-full font-sans text-xs text-center sm:text-left"
+            style={{ color: "var(--rust)", marginBottom: "0.5rem" }}
+          >
+            {checkoutError}
+          </p>
+        )}
 
         {/* Right CTAs */}
         <div
