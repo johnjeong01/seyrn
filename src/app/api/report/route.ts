@@ -4,8 +4,11 @@ import type { OnboardingData } from "@/lib/onboarding-types";
 import type { ReportData } from "@/lib/report-types";
 
 export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 
-const client = new Anthropic();
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 function buildPrompt(data: OnboardingData): string {
   const tpDescriptions = data.turningPoints

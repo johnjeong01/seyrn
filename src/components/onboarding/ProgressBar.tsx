@@ -64,13 +64,63 @@ export default function ProgressBar({ steps, currentIdx }: ProgressBarProps) {
         />
       </div>
 
-      {/* Stage 2 turning point sub-info */}
-      {progress.stage === 2 && progress.tpInfo && progress.tpInfo.questionNum > 0 && (
-        <p className="mt-3 font-sans text-[10px] tracking-[0.1em] uppercase text-[var(--muted)]">
-          Turning Point {progress.tpInfo.tpNum} of {progress.tpInfo.tpTotal}
-          {"  ·  "}
-          Q{progress.tpInfo.questionNum} of 7
-        </p>
+      {/* Stage 2 — turning point tracker */}
+      {progress.stage === 2 && progress.tpInfo && (
+        <div className="mt-4 flex gap-3">
+          {Array.from({ length: progress.tpInfo.tpTotal }, (_, i) => {
+            const tpNum        = i + 1;
+            const isCurrent    = tpNum === progress.tpInfo!.tpNum;
+            const isPast       = tpNum < progress.tpInfo!.tpNum;
+            // questionNum===0 means we're on tp-add-more (all 7 done)
+            const qFilled      = isPast ? 7 : isCurrent ? (progress.tpInfo!.questionNum || 7) : 0;
+
+            return (
+              <div key={tpNum} className="flex-1">
+                <p
+                  className="font-sans text-[9px] tracking-[0.1em] uppercase mb-2"
+                  style={{
+                    color: isCurrent ? "var(--gold)"
+                         : isPast    ? "rgba(201,168,76,0.45)"
+                         :             "var(--muted)",
+                  }}
+                >
+                  Turning Point {tpNum}
+                </p>
+
+                {/* 7 question bars */}
+                <div className="flex gap-0.5">
+                  {Array.from({ length: 7 }, (_, q) => (
+                    <div
+                      key={q}
+                      className="h-[3px] flex-1 rounded-full transition-all duration-300"
+                      style={{
+                        background: q < qFilled
+                          ? (isCurrent ? "var(--gold)" : "rgba(201,168,76,0.3)")
+                          : "rgba(255,255,255,0.07)",
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Status label */}
+                <p
+                  className="font-sans text-[8px] tracking-[0.08em] uppercase mt-1.5"
+                  style={{
+                    color: isCurrent ? "rgba(201,168,76,0.6)"
+                         : isPast    ? "rgba(201,168,76,0.3)"
+                         :             "rgba(255,255,255,0.15)",
+                  }}
+                >
+                  {isPast    ? "Complete"
+                 : isCurrent && progress.tpInfo!.questionNum > 0
+                             ? `Q${progress.tpInfo!.questionNum} of 7`
+                 : isCurrent ? "Complete"
+                 :             "Upcoming"}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
