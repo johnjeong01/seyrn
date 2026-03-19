@@ -386,11 +386,6 @@ export default function ShareCard({ report, turningPoints, currentSeason }: Prop
   const shareData = buildShareData(report, turningPoints, currentSeason ?? null);
   const shareUrl = typeof window !== "undefined" ? buildShareUrl(shareData) : "";
 
-  const canNativeShare =
-    typeof navigator !== "undefined" &&
-    typeof navigator.share === "function" &&
-    typeof navigator.canShare === "function";
-
   const handleOpen = useCallback(async () => {
     if (!canvasRef.current) return;
     setGenerating(true);
@@ -433,23 +428,6 @@ export default function ShareCard({ report, turningPoints, currentSeason }: Prop
     const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(xUrl, "_blank", "noopener,noreferrer");
   }, [report, turningPoints, currentSeason]);
-
-  const handleNativeShare = useCallback(async () => {
-    if (!canvasRef.current) return;
-    canvasRef.current.toBlob(async (blob) => {
-      if (!blob) return;
-      const file = new File([blob], "seyrn-pattern.png", { type: "image/png" });
-      try {
-        await navigator.share({
-          files: [file],
-          title: report.pattern_name,
-          text: report.pattern_archetype,
-        });
-      } catch {
-        /* cancelled */
-      }
-    }, "image/png");
-  }, [report]);
 
   const btnBase: React.CSSProperties = {
     fontFamily: "inherit",
@@ -622,47 +600,23 @@ export default function ShareCard({ report, turningPoints, currentSeason }: Prop
                 Share to X
               </button>
 
-              {/* Native share (mobile) */}
-              {canNativeShare && (
-                <button
-                  onClick={handleNativeShare}
-                  className="font-sans"
-                  style={{
-                    ...btnBase,
-                    background: "transparent",
-                    color: "var(--muted)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "var(--cream)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--muted)";
-                  }}
-                >
-                  Share
-                </button>
-              )}
-
               {/* Close */}
               <button
                 onClick={() => setModalOpen(false)}
-                className="font-sans text-xs transition-colors"
+                className="font-sans"
                 style={{
+                  ...btnBase,
                   background: "transparent",
-                  border: "none",
                   color: "var(--muted)",
-                  cursor: "pointer",
-                  padding: "0.65rem 0.5rem",
-                  letterSpacing: "0.1em",
-                  fontSize: "0.65rem",
-                  textTransform: "uppercase",
+                  border: "1px solid rgba(255,255,255,0.1)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.color = "var(--cream)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.color = "var(--muted)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
                 }}
               >
                 Close
