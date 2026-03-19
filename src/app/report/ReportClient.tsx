@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { OnboardingData } from "@/lib/onboarding-types";
@@ -15,6 +15,7 @@ const PAID_KEY = "seyrn-paid";
 const PLAN_KEY = "seyrn-plan";
 const CUSTOMER_KEY = "seyrn-customer-id";
 const MAGIC_SENT_KEY = "seyrn-magic-sent";
+const REPORT_SAVED_KEY = "seyrn-report-saved";
 
 const LOADING_MESSAGES = [
   "Reading your turning points…",
@@ -123,6 +124,7 @@ export default function ReportClient() {
   const [isPaid, setIsPaid] = useState(false);
   const [plan, setPlan] = useState<"one-time" | "monthly" | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const stripeSessionIdRef = useRef<string | null>(null);
 
   // Load onboarding data + check localStorage for payment status
   useEffect(() => {
@@ -162,33 +164,18 @@ export default function ReportClient() {
           error?: string;
         };
         if (body.paid) {
-          setIsPaid(true);
           const verifiedPlan = body.plan === "monthly" ? "monthly" : "one-time";
-          setPlan(verifiedPlan);
-          setCustomerId(body.customerId ?? null);
 
           localStorage.setItem(PAID_KEY, "true");
           localStorage.setItem(PLAN_KEY, verifiedPlan);
           if (body.customerId) localStorage.setItem(CUSTOMER_KEY, body.customerId);
 
-          // Send magic link once — fire-and-forget, never blocks UX
-          if (!localStorage.getItem(MAGIC_SENT_KEY)) {
-            try {
-              const raw = localStorage.getItem(ONBOARDING_KEY);
-              const email = raw ? (JSON.parse(raw) as { email?: string }).email : null;
-              if (email) {
-                localStorage.setItem(MAGIC_SENT_KEY, "true");
-                fetch("/api/auth/send-magic-link", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    email,
-                    redirectTo: `${window.location.origin}/report`,
-                  }),
-                }).catch(() => { /* silent — email is best-effort */ });
-              }
-            } catch { /* silent */ }
-          }
+          // Capture session ID for later DB save (after report loads)
+          stripeSessionIdRef.current = sessionId;
+
+          setCustomerId(body.customerId ?? null);
+          setPlan(verifiedPlan);
+          setIsPaid(true);
         }
       } catch {
         // Verification failed — user stays in free state
@@ -201,6 +188,50 @@ export default function ReportClient() {
     verifySession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // After payment confirmed + report loaded: save to DB and send magic link
+  useEffect(() => {
+    if (!isPaid || !report) return;
+    // Guard: only run once per session
+    if (localStorage.getItem(REPORT_SAVED_KEY) === "true" && !stripeSessionIdRef.current) return;
+
+    const sessionId = stripeSessionIdRef.current;
+    const raw = localStorage.getItem(ONBOARDING_KEY);
+    let email: string | null = null;
+    const savedPlan = localStorage.getItem(PLAN_KEY) ?? "one-time";
+    try {
+      if (raw) email = (JSON.parse(raw) as { email?: string }).email ?? null;
+    } catch { /* ignore */ }
+
+    // Save report to DB (fire-and-forget)
+    if (sessionId && localStorage.getItem(REPORT_SAVED_KEY) !== "true") {
+      localStorage.setItem(REPORT_SAVED_KEY, "true");
+      stripeSessionIdRef.current = null;
+      fetch("/api/reports/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stripeSessionId: sessionId,
+          email,
+          plan: savedPlan,
+          reportData: report,
+        }),
+      }).catch(() => { /* silent */ });
+    }
+
+    // Send magic link once (fire-and-forget)
+    if (email && !localStorage.getItem(MAGIC_SENT_KEY)) {
+      localStorage.setItem(MAGIC_SENT_KEY, "true");
+      fetch("/api/auth/send-magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          redirectTo: `${window.location.origin}/report`,
+        }),
+      }).catch(() => { /* silent */ });
+    }
+  }, [isPaid, report]);
 
   // Generate or load cached report
   const generateReport = useCallback(
@@ -394,7 +425,7 @@ export default function ReportClient() {
         )}
 
         {report && !loading && (
-          <ReportSections report={report} isPaid={isPaid} turningPoints={data.turningPoints} currentSeason={data.currentSeason} />
+          <ReportSections report={report} isPaid={isPaid} plan={plan} turningPoints={data.turningPoints} currentSeason={data.currentSeason} />
         )}
       </div>
 

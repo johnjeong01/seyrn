@@ -2,50 +2,48 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import WaitlistModal from "./WaitlistModal";
 
-const plans = [
-  {
-    id: "one-time",
-    badge: null,
-    label: "One-Time",
-    price: "$19",
-    period: "once",
-    description: "Everything you need to understand your pattern right now.",
-    features: [
-      "Full 6-section pattern analysis",
-      "Complete life graph (past + predicted future)",
-      "Next turning point timing + preparation plan",
-      "Share card for social",
-      "Permanent access to your report",
-    ],
-    coming: [],
-    cta: "Get Full Report",
-    href: "/onboarding?plan=one-time",
-    highlight: false,
-  },
-  {
-    id: "monthly",
-    badge: "Most valuable",
-    label: "Monthly",
-    price: "$9.99",
-    period: "per month",
-    description: "Your pattern sharpens every week. Designed for sustained growth.",
-    features: [
-      "Everything in One-Time",
-      "Quarterly report updates",
-      "Pattern accuracy improves over time",
-      "Weekly Check-In (coming soon)",
-    ],
-    coming: [
-      "Daily Pattern Journal",
-      "Personalized daily strategy",
-      "Real-time graph updates",
-    ],
-    cta: "Start Monthly",
-    href: "/onboarding?plan=monthly",
-    highlight: true,
-  },
-];
+const oneTimePlan = {
+  id: "one-time",
+  badge: null as string | null,
+  label: "One-Time",
+  price: "$19",
+  period: "once",
+  description: "Everything you need to understand your pattern right now.",
+  features: [
+    "Full 6-section pattern analysis",
+    "Complete life graph (past + predicted future)",
+    "Next turning point timing + preparation plan",
+    "Share card for social",
+    "Permanent access to your report",
+  ],
+  cta: "Get Full Report",
+  href: "/onboarding?plan=one-time",
+  highlight: false,
+  isWaitlist: false,
+};
+
+const waitlistPlan = {
+  id: "monthly",
+  badge: "COMING SOON" as string | null,
+  label: "Monthly",
+  price: "$9.99",
+  period: "per month",
+  description: "Your pattern sharpens every time we re-analyze it. Designed for sustained growth.",
+  features: [
+    "Everything in One-Time",
+    "Quarterly report updates",
+    "Pattern accuracy improves over time",
+    "Daily Pattern Journal",
+    "Personalized daily strategy",
+    "Real-time graph updates",
+  ],
+  cta: "Join the Waitlist →",
+  href: "#",
+  highlight: true,
+  isWaitlist: true,
+};
 
 function Check() {
   return (
@@ -55,16 +53,10 @@ function Check() {
   );
 }
 
-function ComingSoonTag() {
-  return (
-    <span className="ml-2 font-sans text-[9px] tracking-widest uppercase px-1.5 py-0.5 border border-[var(--gold)]/30 text-[var(--gold)]/60">
-      Soon
-    </span>
-  );
-}
 
 export default function Pricing() {
   const [visible, setVisible] = useState(false);
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -110,109 +102,112 @@ export default function Pricing() {
             transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
           }}
         >
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className="relative flex flex-col p-8 md:p-10"
-              style={{
-                background: plan.highlight
-                  ? "rgba(201,168,76,0.04)"
-                  : "rgba(255,255,255,0.02)",
-                border: plan.highlight
-                  ? "1px solid rgba(201,168,76,0.25)"
-                  : "1px solid rgba(255,255,255,0.07)",
-              }}
-            >
-              {/* Badge */}
-              {plan.badge && (
-                <div className="absolute -top-3 left-8">
-                  <span className="font-sans text-[10px] tracking-widest uppercase px-3 py-1 bg-[var(--gold)] text-[var(--ink)] font-medium">
-                    {plan.badge}
-                  </span>
-                </div>
-              )}
-
-              {/* Label */}
-              <p className="font-sans text-xs tracking-[0.25em] uppercase text-[var(--muted)] mb-5">
-                {plan.label}
-              </p>
-
-              {/* Price */}
-              <div className="flex items-baseline gap-2 mb-2">
-                <span
-                  className="font-serif font-light text-[var(--cream)]"
-                  style={{ fontSize: "clamp(2.5rem,5vw,3.5rem)", lineHeight: 1 }}
-                >
-                  {plan.price}
-                </span>
-                <span className="font-sans text-sm text-[var(--muted)]">{plan.period}</span>
-              </div>
-              <p className="font-sans font-light text-[var(--muted)] text-sm mb-8 leading-relaxed">
-                {plan.description}
-              </p>
-
-              {/* Features */}
-              <ul className="flex flex-col gap-3 mb-8">
-                {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2.5 font-sans text-sm text-[var(--warm)]">
-                    <Check />
-                    <span>{f}</span>
-                  </li>
-                ))}
-                {plan.coming.map((f, i) => (
-                  <li key={`soon-${i}`} className="flex items-start gap-2.5 font-sans text-sm text-[var(--muted)]/60">
-                    <Check />
-                    <span>
-                      {f}
-                      <ComingSoonTag />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA */}
-              <div className="mt-auto">
-                <Link
-                  href={plan.href}
-                  className={`block w-full text-center py-3.5 font-sans font-medium text-sm tracking-widest uppercase transition-all duration-400 ${
-                    plan.highlight
-                      ? "bg-[var(--gold)] text-[var(--ink)] hover:bg-[var(--gold-light)]"
-                      : "border border-[var(--cream)]/20 text-[var(--cream)] hover:border-[var(--cream)]/50 hover:bg-[var(--cream)]/4"
-                  }`}
-                  style={
-                    plan.highlight
-                      ? { boxShadow: "0 0 30px rgba(201,168,76,0.15)" }
-                      : {}
-                  }
-                >
-                  {plan.cta}
-                </Link>
-              </div>
+          {/* One-time plan */}
+          <div
+            className="relative flex flex-col p-8 md:p-10"
+            style={{
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <p className="font-sans text-xs tracking-[0.25em] uppercase text-[var(--muted)] mb-5">
+              {oneTimePlan.label}
+            </p>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span
+                className="font-serif font-light text-[var(--cream)]"
+                style={{ fontSize: "clamp(2.5rem,5vw,3.5rem)", lineHeight: 1 }}
+              >
+                {oneTimePlan.price}
+              </span>
+              <span className="font-sans text-sm text-[var(--muted)]">{oneTimePlan.period}</span>
             </div>
-          ))}
+            <p className="font-sans font-light text-[var(--muted)] text-sm mb-8 leading-relaxed">
+              {oneTimePlan.description}
+            </p>
+            <ul className="flex flex-col gap-3 mb-8">
+              {oneTimePlan.features.map((f: string, i: number) => (
+                <li key={i} className="flex items-start gap-2.5 font-sans text-sm text-[var(--warm)]">
+                  <Check />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-auto">
+              <Link
+                href={oneTimePlan.href}
+                className="block w-full text-center py-3.5 font-sans font-medium text-sm tracking-widest uppercase transition-all duration-400 border border-[var(--cream)]/20 text-[var(--cream)] hover:border-[var(--cream)]/50"
+              >
+                {oneTimePlan.cta}
+              </Link>
+            </div>
+          </div>
+
+          {/* Waitlist (monthly) plan */}
+          <div
+            className="relative flex flex-col p-8 md:p-10"
+            style={{
+              background: "rgba(201,168,76,0.04)",
+              border: "1px solid rgba(201,168,76,0.25)",
+            }}
+          >
+            {/* COMING SOON badge */}
+            <div className="absolute -top-3 left-8">
+              <span className="font-sans text-[10px] tracking-widest uppercase px-3 py-1 bg-[var(--gold)] text-[var(--ink)] font-medium">
+                Coming Soon
+              </span>
+            </div>
+
+            <p className="font-sans text-xs tracking-[0.25em] uppercase text-[var(--muted)] mb-5">
+              {waitlistPlan.label}
+            </p>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span
+                className="font-serif font-light text-[var(--cream)]"
+                style={{ fontSize: "clamp(2.5rem,5vw,3.5rem)", lineHeight: 1 }}
+              >
+                {waitlistPlan.price}
+              </span>
+              <span className="font-sans text-sm text-[var(--muted)]">{waitlistPlan.period}</span>
+            </div>
+            <p className="font-sans font-light text-[var(--muted)] text-sm mb-8 leading-relaxed">
+              {waitlistPlan.description}
+            </p>
+            <ul className="flex flex-col gap-3 mb-8">
+              {waitlistPlan.features.map((f: string, i: number) => (
+                <li key={i} className="flex items-start gap-2.5 font-sans text-sm text-[var(--warm)]">
+                  <Check />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-auto">
+              <button
+                onClick={() => setWaitlistOpen(true)}
+                className="block w-full text-center py-3.5 font-sans font-medium text-sm tracking-widest uppercase transition-all duration-400 bg-[var(--gold)] text-[var(--ink)] hover:bg-[var(--gold-light)]"
+                style={{ boxShadow: "0 0 30px rgba(201,168,76,0.15)" }}
+              >
+                {waitlistPlan.cta}
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Coming soon notice */}
-        <div
-          className="mt-10 p-6 text-center"
-          style={{ border: "1px solid rgba(255,255,255,0.05)" }}
-        >
-          <p className="font-sans text-xs tracking-widest uppercase text-[var(--gold)]/50 mb-2">
-            Coming Soon
-          </p>
-          <p className="font-serif font-light text-[var(--cream)]/60 text-lg mb-1">
-            Daily Pattern Journal
-          </p>
-          <p className="font-sans text-sm text-[var(--muted)] max-w-md mx-auto">
-            Every day you record makes your strategy sharper. No two strategies are alike — because no two lives are.
-          </p>
-        </div>
+        {/* Nudge below cards */}
+        <p className="text-center font-sans text-xs text-[var(--muted)] mt-6">
+          Not sure? Start with the one-time report.
+        </p>
 
         {/* Trust line */}
-        <p className="text-center font-sans text-xs text-[var(--muted)]/50 mt-8 tracking-wide">
+        <p className="text-center font-sans text-xs text-[var(--muted)]/50 mt-4 tracking-wide">
           One-time payment · Instant access · No subscriptions unless you want them
         </p>
       </div>
+
+      {/* Waitlist modal */}
+      {waitlistOpen && (
+        <WaitlistModal onClose={() => setWaitlistOpen(false)} />
+      )}
     </section>
   );
 }

@@ -74,6 +74,14 @@ export default function OnboardingClient() {
     setStepIdx((prev) => prev + 1);
   }, []);
 
+  const goBack = useCallback(() => {
+    setStepIdx((prev) => Math.max(0, prev - 1));
+  }, []);
+
+  const jumpToStage = useCallback((firstIdx: number) => {
+    setStepIdx(firstIdx);
+  }, []);
+
   const updateData = useCallback((patch: Partial<OnboardingData>) => {
     setData((prev) => ({ ...prev, ...patch }));
   }, []);
@@ -363,6 +371,8 @@ export default function OnboardingClient() {
       context={meta.context}
       question={meta.question}
       turningPoints={currentStep.stage === 2 ? data.turningPoints : undefined}
+      onBack={stepIdx > 0 ? goBack : undefined}
+      onStageClick={jumpToStage}
     >
       {renderInput()}
     </QuestionWrapper>

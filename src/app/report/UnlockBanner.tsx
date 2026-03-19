@@ -9,7 +9,7 @@ interface Props {
 
 export default function UnlockBanner({ show, predictedYear }: Props) {
   const [visible, setVisible] = useState(false);
-  const [loading, setLoading] = useState<"one-time" | "monthly" | null>(null);
+  const [loading, setLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,11 +33,10 @@ export default function UnlockBanner({ show, predictedYear }: Props) {
 
   const yearText = predictedYear ? `around ${predictedYear}` : "soon";
 
-  async function handleCheckout(plan: "one-time" | "monthly") {
-    setLoading(plan);
+  async function handleCheckout() {
+    setLoading(true);
     setCheckoutError(null);
     try {
-      // Read email from onboarding data so Stripe metadata has it
       let email: string | undefined;
       try {
         const raw = localStorage.getItem("seyrn-onboarding-data");
@@ -47,18 +46,18 @@ export default function UnlockBanner({ show, predictedYear }: Props) {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, email }),
+        body: JSON.stringify({ plan: "one-time", email }),
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (data.url) {
         window.location.href = data.url;
       } else {
         setCheckoutError(data.error ?? "Checkout failed. Please try again.");
-        setLoading(null);
+        setLoading(false);
       }
     } catch {
       setCheckoutError("Network error. Please try again.");
-      setLoading(null);
+      setLoading(false);
     }
   }
 
@@ -115,30 +114,20 @@ export default function UnlockBanner({ show, predictedYear }: Props) {
           </p>
         )}
 
-        {/* Right CTAs */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "1.25rem",
-            flexShrink: 0,
-          }}
-          className="w-full sm:w-auto"
-        >
-          {/* Primary button */}
+        {/* CTA */}
+        <div className="w-full sm:w-auto">
           <button
-            disabled={loading !== null}
+            disabled={loading}
             className="font-sans text-xs tracking-widest uppercase transition-all w-full sm:w-auto"
             style={{
-              background: loading === "one-time" ? "var(--gold-light)" : "var(--gold)",
+              background: loading ? "var(--gold-light)" : "var(--gold)",
               color: "var(--ink)",
               padding: "0.75rem 1.5rem",
               border: "none",
-              cursor: loading !== null ? "wait" : "pointer",
+              cursor: loading ? "wait" : "pointer",
               fontWeight: 500,
               letterSpacing: "0.12em",
               whiteSpace: "nowrap",
-              opacity: loading !== null && loading !== "one-time" ? 0.5 : 1,
             }}
             onMouseEnter={(e) => {
               if (!loading) e.currentTarget.style.background = "var(--gold-light)";
@@ -146,35 +135,9 @@ export default function UnlockBanner({ show, predictedYear }: Props) {
             onMouseLeave={(e) => {
               if (!loading) e.currentTarget.style.background = "var(--gold)";
             }}
-            onClick={() => handleCheckout("one-time")}
+            onClick={handleCheckout}
           >
-            {loading === "one-time" ? "Loading…" : "Unlock Full Report — $19"}
-          </button>
-
-          {/* Secondary link */}
-          <button
-            disabled={loading !== null}
-            className="font-sans text-xs transition-colors"
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: loading !== null ? "wait" : "pointer",
-              color: "var(--muted)",
-              textDecoration: "underline",
-              textUnderlineOffset: "3px",
-              whiteSpace: "nowrap",
-              padding: "0.75rem 0",
-              opacity: loading !== null && loading !== "monthly" ? 0.5 : 1,
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) e.currentTarget.style.color = "var(--cream)";
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) e.currentTarget.style.color = "var(--muted)";
-            }}
-            onClick={() => handleCheckout("monthly")}
-          >
-            {loading === "monthly" ? "Loading…" : "$9.99/mo"}
+            {loading ? "Loading…" : "Unlock Full Report — $19"}
           </button>
         </div>
       </div>

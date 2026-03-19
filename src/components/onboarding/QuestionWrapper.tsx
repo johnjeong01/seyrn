@@ -11,6 +11,8 @@ interface QuestionWrapperProps {
   context:        string;
   question:       string;
   turningPoints?: TurningPoint[];
+  onBack?:        () => void;
+  onStageClick?:  (firstStepIdxInStage: number) => void;
   children:       ReactNode;
 }
 
@@ -20,11 +22,13 @@ export default function QuestionWrapper({
   context,
   question,
   turningPoints,
+  onBack,
+  onStageClick,
   children,
 }: QuestionWrapperProps) {
   return (
     <div>
-      <ProgressBar steps={steps} currentIdx={currentIdx} />
+      <ProgressBar steps={steps} currentIdx={currentIdx} onStageClick={onStageClick} />
 
       <div style={{ animation: "fadeUp 0.45s ease-out forwards" }}>
         {/* Context sentence */}
@@ -44,6 +48,27 @@ export default function QuestionWrapper({
         {turningPoints && <MiniGraph turningPoints={turningPoints} />}
 
         {children}
+
+        {/* Back button — shown from step 2 onwards */}
+        {onBack && currentIdx > 0 && (
+          <div className="mt-10">
+            <button
+              onClick={onBack}
+              className="font-sans text-sm transition-colors"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--muted)",
+                cursor: "pointer",
+                padding: 0,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--cream)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted)"; }}
+            >
+              ← Back
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

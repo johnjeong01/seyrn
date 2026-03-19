@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import type { ReportData, ReportTheme, ReportMove, ForecastYear } from "@/lib/report-types";
 import type { TurningPoint } from "@/lib/onboarding-types";
 import ShareCard from "./ShareCard";
@@ -7,6 +8,7 @@ import ShareCard from "./ShareCard";
 interface Props {
   report: ReportData;
   isPaid: boolean;
+  plan: "one-time" | "monthly" | null;
   turningPoints: TurningPoint[];
   currentSeason?: string | null;
 }
@@ -139,33 +141,142 @@ function TimeframeBlock({ label, content }: { label: string; content: string }) 
   );
 }
 
-function ForecastBar({ year }: { year: ForecastYear }) {
-  const pct = ((year.energy - 1) / 9) * 100;
-  const isHigh = year.energy >= 7;
-  const barColor = isHigh ? "var(--sage)" : year.energy <= 4 ? "var(--rust)" : "var(--gold)";
+function ForecastTimeline({
+  years,
+  currentYear,
+}: {
+  years: ForecastYear[];
+  currentYear: number;
+}) {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) setVisible(true); },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   return (
-    <div>
-      <div className="flex items-baseline justify-between mb-2">
-        <span className="font-serif font-light text-base" style={{ color: "var(--cream)" }}>
-          {year.year}
-        </span>
-        <span className="font-sans text-xs" style={{ color: "var(--muted)" }}>
-          {year.theme}
-        </span>
-      </div>
+    <div ref={ref} style={{ position: "relative" }}>
+      {/* Continuous vertical line — animates top-to-bottom on scroll */}
       <div
-        className="relative h-1 rounded-full overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.06)" }}
-      >
-        <div
-          className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, background: barColor }}
-        />
-      </div>
-      <p className="font-sans text-xs mt-1" style={{ color: "var(--muted)" }}>
-        Energy {year.energy}/10
-      </p>
+        style={{
+          position: "absolute",
+          left: "calc(88px + 14px)", // left col (88px) + half of center col (28px)
+          top: "12px",
+          bottom: "12px",
+          width: "1px",
+          background: "rgba(201,168,76,0.2)",
+          transformOrigin: "top",
+          transform: visible ? "scaleY(1)" : "scaleY(0)",
+          transition: "transform 0.8s ease 0.1s",
+        }}
+      />
+
+      {years.map((yr, i) => {
+        const isHigh   = yr.energy >= 8;
+        const isMed    = yr.energy >= 6 && yr.energy < 8;
+        const barPct   = (yr.energy / 10) * 100;
+        const isCurrent = yr.year === currentYear;
+        const delay    = `${0.15 + i * 0.12}s`;
+
+        const nodeColor  = isHigh ? "var(--gold)" : isMed ? "transparent" : "rgba(122,114,104,0.4)";
+        const nodeBorder = isHigh
+          ? "2px solid var(--gold)"
+          : isMed
+          ? "1.5px solid var(--gold)"
+          : "1px solid rgba(122,114,104,0.4)";
+        const barColor = yr.energy >= 8
+          ? "var(--sage)"
+          : yr.energy <= 4
+          ? "var(--rust)"
+          : "var(--gold)";
+
+        return (
+          <div
+            key={i}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "88px 28px 1fr",
+              gap: "0 1rem",
+              alignItems: "center",
+              marginBottom: i < years.length - 1 ? "2rem" : 0,
+              opacity: visible ? 1 : 0,
+              transition: `opacity 0.5s ease ${delay}`,
+            }}
+          >
+            {/* Left: year + milestone */}
+            <div style={{ textAlign: "right", paddingRight: "4px" }}>
+              <span
+                className="font-serif font-light"
+                style={{ fontSize: "1.6rem", color: "var(--gold)", lineHeight: 1, display: "block" }}
+              >
+                {yr.year}
+              </span>
+              <p
+                className="font-sans text-xs mt-1 leading-tight"
+                style={{ color: "var(--cream)" }}
+              >
+                {yr.theme}
+              </p>
+              {isCurrent && (
+                <p
+                  className="font-sans text-[9px] tracking-widest uppercase mt-1.5"
+                  style={{ color: "var(--gold)" }}
+                >
+                  You are here
+                </p>
+              )}
+            </div>
+
+            {/* Center: node */}
+            <div style={{ display: "flex", justifyContent: "center", position: "relative", zIndex: 1 }}>
+              <div
+                className={isCurrent ? "pulse-gold" : ""}
+                style={{
+                  width: isCurrent ? "14px" : "10px",
+                  height: isCurrent ? "14px" : "10px",
+                  borderRadius: "50%",
+                  background: nodeColor,
+                  border: nodeBorder,
+                  flexShrink: 0,
+                }}
+              />
+            </div>
+
+            {/* Right: energy bar + label */}
+            <div>
+              <div
+                style={{
+                  height: "3px",
+                  background: "rgba(255,255,255,0.06)",
+                  borderRadius: "2px",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: visible ? `${barPct}%` : "0%",
+                    background: barColor,
+                    transition: `width 0.6s ease ${delay}`,
+                    borderRadius: "2px",
+                  }}
+                />
+              </div>
+              <p className="font-sans text-xs mt-1.5" style={{ color: "var(--muted)" }}>
+                Energy {yr.energy}/10
+              </p>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -252,7 +363,158 @@ function FreeEnding({ report }: { report: ReportData }) {
   );
 }
 
-export default function ReportSections({ report, isPaid, turningPoints, currentSeason }: Props) {
+function WaitlistSection() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [prefilled, setPrefilled] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("seyrn-onboarding-data");
+      if (raw) {
+        const parsed = JSON.parse(raw) as { email?: string };
+        if (parsed.email) {
+          setEmail(parsed.email);
+          setPrefilled(true);
+        }
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  async function handleJoin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.includes("@")) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/waitlist/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "post_report_onetime" }),
+      });
+      const body = (await res.json()) as { success?: boolean; error?: string };
+      if (body.success) {
+        setDone(true);
+      } else {
+        setError(body.error ?? "Something went wrong. Please try again.");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        background: "#1f1d19",
+        marginTop: "4rem",
+        marginLeft: "calc(-50vw + 50%)",
+        marginRight: "calc(-50vw + 50%)",
+        padding: "5rem 1.5rem",
+      }}
+    >
+      <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+        <p
+          className="font-sans text-xs tracking-[0.25em] uppercase mb-5"
+          style={{ color: "var(--gold)" }}
+        >
+          What Comes Next
+        </p>
+        <h2
+          className="font-serif font-light mb-6"
+          style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)", color: "var(--cream)", lineHeight: 1.15 }}
+        >
+          Your pattern doesn&apos;t stop here.
+        </h2>
+
+        <p
+          className="font-sans font-light text-sm leading-relaxed mb-4"
+          style={{ color: "var(--warm)" }}
+        >
+          This report is a snapshot. Your life keeps moving — and so does your pattern.
+        </p>
+        <p
+          className="font-sans font-light text-sm leading-relaxed mb-4"
+          style={{ color: "var(--warm)" }}
+        >
+          Seyrn monthly is launching soon with weekly check-ins, quarterly pattern updates,
+          and a daily strategy that sharpens as your data grows.
+        </p>
+        <p
+          className="font-sans font-light text-sm leading-relaxed mb-10"
+          style={{ color: "var(--warm)" }}
+        >
+          The people on the waitlist get first access and a launch discount.
+        </p>
+
+        {done ? (
+          <div style={{ borderLeft: "2px solid var(--gold)", paddingLeft: "1.25rem" }}>
+            <p className="font-serif font-light text-lg mb-2" style={{ color: "var(--cream)" }}>
+              You&apos;re on the list.
+            </p>
+            <p className="font-sans text-sm" style={{ color: "var(--muted)" }}>
+              We&apos;ll reach you at <span style={{ color: "var(--cream)" }}>{email}</span> when
+              monthly launches.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleJoin}>
+            {!prefilled && (
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className="font-sans text-sm w-full mb-4"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "none",
+                  borderBottom: "1px solid rgba(201,168,76,0.35)",
+                  color: "var(--cream)",
+                  padding: "0.75rem 0",
+                  outline: "none",
+                  width: "100%",
+                }}
+              />
+            )}
+
+            {error && (
+              <p className="font-sans text-xs mb-3" style={{ color: "var(--rust)" }}>{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !email.includes("@")}
+              className="font-sans text-xs tracking-widest uppercase transition-all"
+              style={{
+                background: loading || !email.includes("@") ? "rgba(201,168,76,0.4)" : "var(--gold)",
+                color: "var(--ink)",
+                border: "none",
+                padding: "0.85rem 2rem",
+                cursor: loading || !email.includes("@") ? "not-allowed" : "pointer",
+                fontWeight: 500,
+                letterSpacing: "0.12em",
+              }}
+            >
+              {loading
+                ? "Joining…"
+                : prefilled
+                ? `Join with ${email} →`
+                : "Join the Waitlist →"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function ReportSections({ report, isPaid, plan, turningPoints, currentSeason }: Props) {
   const { sections } = report;
   const delay = (n: number) => ({ animation: `fadeUp 0.8s ease-out ${n * 0.15}s both` });
 
@@ -447,10 +709,11 @@ export default function ReportSections({ report, isPaid, turningPoints, currentS
         <SectionLabel>Life Forecast</SectionLabel>
         <BlurGate isPaid={isPaid}>
           <SectionHeadline>{sections.life_forecast.headline}</SectionHeadline>
-          <div className="space-y-6 mb-12 max-w-lg">
-            {sections.life_forecast.forecast_years.map((year, i) => (
-              <ForecastBar key={i} year={year} />
-            ))}
+          <div className="mb-12 max-w-lg">
+            <ForecastTimeline
+              years={sections.life_forecast.forecast_years}
+              currentYear={new Date().getFullYear()}
+            />
           </div>
           <p
             className="font-serif font-light text-xl max-w-2xl"
@@ -460,6 +723,9 @@ export default function ReportSections({ report, isPaid, turningPoints, currentS
           </p>
         </BlurGate>
       </div>
+
+      {/* Waitlist CTA — one-time paid users only */}
+      {isPaid && plan === "one-time" && <WaitlistSection />}
     </div>
   );
 }

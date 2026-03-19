@@ -12,11 +12,12 @@ const STAGE_LABELS = [
 ];
 
 interface ProgressBarProps {
-  steps:      Step[];
-  currentIdx: number;
+  steps:          Step[];
+  currentIdx:     number;
+  onStageClick?:  (firstStepIdxInStage: number) => void;
 }
 
-export default function ProgressBar({ steps, currentIdx }: ProgressBarProps) {
+export default function ProgressBar({ steps, currentIdx, onStageClick }: ProgressBarProps) {
   const progress   = getStageProgress(steps, currentIdx);
   const overallPct = Math.round(((currentIdx + 1) / steps.length) * 100);
 
@@ -28,6 +29,10 @@ export default function ProgressBar({ steps, currentIdx }: ProgressBarProps) {
           const stage    = (i + 1) as 1 | 2 | 3 | 4 | 5;
           const isActive = progress.stage === stage;
           const isPast   = progress.stage > stage;
+          const isClickable = isPast && !!onStageClick;
+
+          // Find the first step index belonging to this stage
+          const firstIdxInStage = steps.findIndex((s) => s.stage === stage);
 
           return (
             <div
@@ -39,6 +44,12 @@ export default function ProgressBar({ steps, currentIdx }: ProgressBarProps) {
                   isPast   ? "rgba(201,168,76,0.3)" :
                              "rgba(255,255,255,0.07)"
                 }`,
+                cursor: isClickable ? "pointer" : "default",
+              }}
+              onClick={() => {
+                if (isClickable && firstIdxInStage !== -1) {
+                  onStageClick(firstIdxInStage);
+                }
               }}
             >
               <span
