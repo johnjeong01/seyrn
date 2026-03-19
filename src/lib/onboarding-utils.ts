@@ -28,6 +28,7 @@ export function getInitialData(): OnboardingData {
     }
   }
   return {
+    email:           "",
     currentAge:      35,
     futureAge:       65,
     currentSeason:   null,
@@ -62,8 +63,9 @@ export function generateSteps(tpCount: number): Step[] {
   const steps: Step[] = [];
 
   // Stage 1
-  steps.push({ id: "age",    stage: 1 });
-  steps.push({ id: "season", stage: 1 });
+  steps.push({ id: "email-collect", stage: 1 });
+  steps.push({ id: "age",           stage: 1 });
+  steps.push({ id: "season",        stage: 1 });
 
   // Stage 2 — one block per turning point
   for (let i = 0; i < tpCount; i++) {
@@ -110,7 +112,7 @@ export function getStageProgress(
   const current = steps[currentIdx];
   const stageSteps = steps.filter((s) => s.stage === current.stage);
   const stageStepNum = stageSteps.findIndex(
-    (s, i) => steps.indexOf(stageSteps[i]) === currentIdx
+    (_s, i) => steps.indexOf(stageSteps[i]) === currentIdx
   ) + 1;
 
   if (current.stage === 2 && current.tpIndex !== undefined) {

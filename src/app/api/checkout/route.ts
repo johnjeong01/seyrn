@@ -3,7 +3,10 @@ import { stripe } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   try {
-    const { plan } = (await req.json()) as { plan: "one-time" | "monthly" };
+    const { plan, email } = (await req.json()) as {
+      plan: "one-time" | "monthly";
+      email?: string;
+    };
 
     const priceId =
       plan === "monthly"
@@ -24,7 +27,7 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/report?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/report`,
-      metadata: { plan },
+      metadata: { plan, email: email ?? "" },
     });
 
     return NextResponse.json({ url: session.url });

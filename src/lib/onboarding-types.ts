@@ -29,6 +29,9 @@ export interface TurningPoint {
 // ── Full onboarding data ───────────────────────────────────────
 
 export interface OnboardingData {
+  // Pre-stage (collected before age setup)
+  email?: string;
+
   // Stage 1
   currentAge:   number;
   futureAge:    number;

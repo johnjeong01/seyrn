@@ -45,6 +45,7 @@ import EnergySlider    from "@/components/onboarding/inputs/EnergySlider";
 import YearTitleInput  from "@/components/onboarding/inputs/YearTitleInput";
 import TextQuestion    from "@/components/onboarding/inputs/TextQuestion";
 import AddMoreTP       from "@/components/onboarding/inputs/AddMoreTP";
+import EmailInput      from "@/components/onboarding/inputs/EmailInput";
 
 export default function OnboardingClient() {
   const router = useRouter();
@@ -93,6 +94,17 @@ export default function OnboardingClient() {
 
   function renderInput() {
     switch (currentStep.id) {
+      case "email-collect":
+        return (
+          <EmailInput
+            value={data.email ?? ""}
+            onComplete={(email) => {
+              updateData({ email });
+              advance();
+            }}
+          />
+        );
+
       case "age":
         return (
           <AgeSetup

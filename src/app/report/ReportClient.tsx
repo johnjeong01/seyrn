@@ -14,6 +14,7 @@ const ONBOARDING_KEY = "seyrn-onboarding-data";
 const PAID_KEY = "seyrn-paid";
 const PLAN_KEY = "seyrn-plan";
 const CUSTOMER_KEY = "seyrn-customer-id";
+const MAGIC_SENT_KEY = "seyrn-magic-sent";
 
 const LOADING_MESSAGES = [
   "Reading your turning points…",
@@ -169,6 +170,25 @@ export default function ReportClient() {
           localStorage.setItem(PAID_KEY, "true");
           localStorage.setItem(PLAN_KEY, verifiedPlan);
           if (body.customerId) localStorage.setItem(CUSTOMER_KEY, body.customerId);
+
+          // Send magic link once — fire-and-forget, never blocks UX
+          if (!localStorage.getItem(MAGIC_SENT_KEY)) {
+            try {
+              const raw = localStorage.getItem(ONBOARDING_KEY);
+              const email = raw ? (JSON.parse(raw) as { email?: string }).email : null;
+              if (email) {
+                localStorage.setItem(MAGIC_SENT_KEY, "true");
+                fetch("/api/auth/send-magic-link", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    email,
+                    redirectTo: `${window.location.origin}/report`,
+                  }),
+                }).catch(() => { /* silent — email is best-effort */ });
+              }
+            } catch { /* silent */ }
+          }
         }
       } catch {
         // Verification failed — user stays in free state

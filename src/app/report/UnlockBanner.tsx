@@ -37,10 +37,17 @@ export default function UnlockBanner({ show, predictedYear }: Props) {
     setLoading(plan);
     setCheckoutError(null);
     try {
+      // Read email from onboarding data so Stripe metadata has it
+      let email: string | undefined;
+      try {
+        const raw = localStorage.getItem("seyrn-onboarding-data");
+        if (raw) email = (JSON.parse(raw) as { email?: string }).email;
+      } catch { /* ignore */ }
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, email }),
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (data.url) {
