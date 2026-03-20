@@ -28,6 +28,7 @@ export function getInitialData(): OnboardingData {
     }
   }
   return {
+    firstName:       "",
     email:           "",
     currentAge:      35,
     futureAge:       65,
@@ -63,6 +64,7 @@ export function generateSteps(tpCount: number): Step[] {
   const steps: Step[] = [];
 
   // Stage 1
+  steps.push({ id: "name-collect",  stage: 1 });
   steps.push({ id: "email-collect", stage: 1 });
   steps.push({ id: "age",           stage: 1 });
   steps.push({ id: "season",        stage: 1 });

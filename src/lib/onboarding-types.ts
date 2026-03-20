@@ -30,6 +30,7 @@ export interface TurningPoint {
 
 export interface OnboardingData {
   // Pre-stage (collected before age setup)
+  firstName?: string;
   email?: string;
 
   // Stage 1

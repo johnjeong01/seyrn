@@ -8,6 +8,7 @@ interface Props {
   report: ReportData;
   turningPoints: TurningPoint[];
   currentSeason?: string | null;
+  firstName?: string | null;
 }
 
 const W = 1080;
@@ -179,12 +180,14 @@ interface ShareData {
   m: number | null;
   sea: string | null;
   tps: Array<{ yr: number; e: number }>;
+  fn?: string; // firstName
 }
 
 function buildShareData(
   report: ReportData,
   tps: TurningPoint[],
-  season: string | null
+  season: string | null,
+  firstName?: string | null
 ): ShareData {
   return {
     n: report.pattern_name,
@@ -196,6 +199,7 @@ function buildShareData(
     tps: tps
       .filter((tp) => tp.year !== null)
       .map((tp) => ({ yr: tp.year as number, e: tp.energyLevel })),
+    fn: firstName || undefined,
   };
 }
 
@@ -375,7 +379,7 @@ async function buildCard(
 
 // ── Component ────────────────────────────────────────────────────
 
-export default function ShareCard({ report, turningPoints, currentSeason }: Props) {
+export default function ShareCard({ report, turningPoints, currentSeason, firstName }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -383,7 +387,7 @@ export default function ShareCard({ report, turningPoints, currentSeason }: Prop
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const shareData = buildShareData(report, turningPoints, currentSeason ?? null);
+  const shareData = buildShareData(report, turningPoints, currentSeason ?? null, firstName);
   const shareUrl = typeof window !== "undefined" ? buildShareUrl(shareData) : "";
 
   const handleOpen = useCallback(async () => {
@@ -412,7 +416,7 @@ export default function ShareCard({ report, turningPoints, currentSeason }: Prop
   }, [imageUrl]);
 
   const handleCopyLink = useCallback(async () => {
-    const url = buildShareUrl(buildShareData(report, turningPoints, currentSeason ?? null));
+    const url = buildShareUrl(buildShareData(report, turningPoints, currentSeason ?? null, firstName));
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -424,7 +428,7 @@ export default function ShareCard({ report, turningPoints, currentSeason }: Prop
 
   const handleShareX = useCallback(() => {
     const text = `My life pattern: "${report.pattern_name}" — ${report.pattern_archetype.slice(0, 80)}\n\nFind yours:`;
-    const url = buildShareUrl(buildShareData(report, turningPoints, currentSeason ?? null));
+    const url = buildShareUrl(buildShareData(report, turningPoints, currentSeason ?? null, firstName));
     const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(xUrl, "_blank", "noopener,noreferrer");
   }, [report, turningPoints, currentSeason]);

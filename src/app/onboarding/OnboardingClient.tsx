@@ -46,6 +46,7 @@ import YearTitleInput  from "@/components/onboarding/inputs/YearTitleInput";
 import TextQuestion    from "@/components/onboarding/inputs/TextQuestion";
 import AddMoreTP       from "@/components/onboarding/inputs/AddMoreTP";
 import EmailInput      from "@/components/onboarding/inputs/EmailInput";
+import NameInput       from "@/components/onboarding/inputs/NameInput";
 
 export default function OnboardingClient() {
   const router = useRouter();
@@ -100,8 +101,21 @@ export default function OnboardingClient() {
   const tpIndex = currentStep.tpIndex ?? 0;
   const tp      = data.turningPoints[tpIndex];
 
+  const firstName = (data.firstName ?? "").trim();
+
   function renderInput() {
     switch (currentStep.id) {
+      case "name-collect":
+        return (
+          <NameInput
+            value={data.firstName ?? ""}
+            onComplete={(name) => {
+              updateData({ firstName: name });
+              advance();
+            }}
+          />
+        );
+
       case "email-collect":
         return (
           <EmailInput
@@ -363,13 +377,30 @@ export default function OnboardingClient() {
     }
   }
 
+  // Personalize context/question with firstName where applicable
+  const personalizedQuestion =
+    currentStep.id === "email-collect" && firstName
+      ? `Good to meet you, ${firstName}. Enter your email to save your results permanently.`
+      : currentStep.id === "season" && firstName
+      ? `${firstName}, which season best describes where your life is today?`
+      : meta.question;
+
+  const personalizedContext =
+    currentStep.id === "email-collect"
+      ? "Where should we send your report?"
+      : currentStep.id === "repeated-mistake" && firstName
+      ? `These three questions reveal the invisible threads running through your story, ${firstName}.`
+      : currentStep.id === "change-response" && firstName
+      ? `Last three questions, ${firstName}. These calibrate the timing of your predictions.`
+      : meta.context;
+
   return (
     <QuestionWrapper
       key={stepIdx}
       steps={steps}
       currentIdx={stepIdx}
-      context={meta.context}
-      question={meta.question}
+      context={personalizedContext}
+      question={personalizedQuestion}
       turningPoints={currentStep.stage === 2 ? data.turningPoints : undefined}
       onBack={stepIdx > 0 ? goBack : undefined}
       onStageClick={jumpToStage}

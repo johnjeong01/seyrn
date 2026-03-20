@@ -54,8 +54,12 @@ function buildPrompt(data: OnboardingData): string {
     "stayed-failure": "someone who stayed through failure",
   };
 
-  return `You are a life pattern analyst. Analyze this person's life data and generate a deep, personalized Life Pattern Report.
+  const nameInstruction = data.firstName
+    ? `The user's first name is ${data.firstName}. Use their name naturally at exactly 4 moments only: (1) the opening line of life_pattern body, (2) the opening of next_turning_point body, (3) the opening of strategy core_insight, (4) the opening of action_plan 90_days. Do not use their name anywhere else — too frequent feels automated.`
+    : "";
 
+  return `You are a life pattern analyst. Analyze this person's life data and generate a deep, personalized Life Pattern Report.
+${nameInstruction ? `\n${nameInstruction}\n` : ""}
 PERSON PROFILE:
 - Current age: ${data.currentAge}, planning to age: ${data.futureAge}
 - Current life season: ${data.currentSeason ?? "not specified"}

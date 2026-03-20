@@ -9,6 +9,7 @@ interface ShareData {
   m?: number | null;
   sea?: string | null;
   tps?: Array<{ yr: number; e: number }>;
+  fn?: string;
 }
 
 function decode(d: string): ShareData | null {
@@ -250,7 +251,7 @@ export default function SharedPatternPage({
           className="font-sans text-xs tracking-[0.3em] uppercase mb-8"
           style={{ color: "var(--gold)", opacity: 0.85 }}
         >
-          Life Pattern · Seyrn
+          {data.fn ? `You're viewing ${data.fn}'s life pattern · Seyrn` : "Life Pattern · Seyrn"}
         </p>
 
         <h1

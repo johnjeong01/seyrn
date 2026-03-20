@@ -7,6 +7,11 @@ export interface StepMeta {
 }
 
 export const STEP_META: Record<string, StepMeta> = {
+  "name-collect": {
+    context:    "Before we begin.",
+    question:   "What should we call you?",
+    stageLabel: "Access",
+  },
   "email-collect": {
     context:    "Before we begin,",
     question:   "Where should we send your report?",

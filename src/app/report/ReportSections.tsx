@@ -11,6 +11,7 @@ interface Props {
   plan: "one-time" | "monthly" | null;
   turningPoints: TurningPoint[];
   currentSeason?: string | null;
+  firstName?: string | null;
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -363,8 +364,9 @@ function FreeEnding({ report }: { report: ReportData }) {
   );
 }
 
-function WaitlistSection() {
+function WaitlistSection({ firstName: nameProp }: { firstName?: string | null }) {
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState(nameProp ?? "");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -374,14 +376,15 @@ function WaitlistSection() {
     try {
       const raw = localStorage.getItem("seyrn-onboarding-data");
       if (raw) {
-        const parsed = JSON.parse(raw) as { email?: string };
+        const parsed = JSON.parse(raw) as { email?: string; firstName?: string };
         if (parsed.email) {
           setEmail(parsed.email);
           setPrefilled(true);
         }
+        if (parsed.firstName && !nameProp) setFirstName(parsed.firstName);
       }
     } catch { /* ignore */ }
-  }, []);
+  }, [nameProp]);
 
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault();
@@ -392,7 +395,7 @@ function WaitlistSection() {
       const res = await fetch("/api/waitlist/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, source: "post_report_onetime" }),
+        body: JSON.stringify({ email, firstName: firstName || undefined, source: "post_report_onetime" }),
       });
       const body = (await res.json()) as { success?: boolean; error?: string };
       if (body.success) {
@@ -454,7 +457,7 @@ function WaitlistSection() {
         {done ? (
           <div style={{ borderLeft: "2px solid var(--gold)", paddingLeft: "1.25rem" }}>
             <p className="font-serif font-light text-lg mb-2" style={{ color: "var(--cream)" }}>
-              You&apos;re on the list.
+              {firstName ? `You\u2019re on the list, ${firstName}.` : "You\u2019re on the list."}
             </p>
             <p className="font-sans text-sm" style={{ color: "var(--muted)" }}>
               We&apos;ll reach you at <span style={{ color: "var(--cream)" }}>{email}</span> when
@@ -514,7 +517,7 @@ function WaitlistSection() {
   );
 }
 
-export default function ReportSections({ report, isPaid, plan, turningPoints, currentSeason }: Props) {
+export default function ReportSections({ report, isPaid, plan, turningPoints, currentSeason, firstName }: Props) {
   const { sections } = report;
   const delay = (n: number) => ({ animation: `fadeUp 0.8s ease-out ${n * 0.15}s both` });
 
@@ -526,7 +529,7 @@ export default function ReportSections({ report, isPaid, plan, turningPoints, cu
           className="font-sans text-xs tracking-[0.3em] uppercase mb-4"
           style={{ color: "var(--muted)" }}
         >
-          Your Life Pattern
+          {firstName ? `${firstName}'s Life Pattern` : "Your Life Pattern"}
         </p>
         <h2
           className="font-serif font-light mb-3"
@@ -545,7 +548,7 @@ export default function ReportSections({ report, isPaid, plan, turningPoints, cu
           {report.pattern_archetype}
         </p>
 
-        <ShareCard report={report} turningPoints={turningPoints} currentSeason={currentSeason} />
+        <ShareCard report={report} turningPoints={turningPoints} currentSeason={currentSeason} firstName={firstName} />
       </div>
 
       <div className="divider-gold" />
@@ -725,7 +728,7 @@ export default function ReportSections({ report, isPaid, plan, turningPoints, cu
       </div>
 
       {/* Waitlist CTA — one-time paid users only */}
-      {isPaid && plan === "one-time" && <WaitlistSection />}
+      {isPaid && plan === "one-time" && <WaitlistSection firstName={firstName} />}
     </div>
   );
 }

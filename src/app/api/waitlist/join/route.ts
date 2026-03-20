@@ -3,14 +3,18 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, source } = (await req.json()) as { email?: string; source?: string };
+    const { email, firstName, source } = (await req.json()) as { email?: string; firstName?: string; source?: string };
 
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "Valid email required" }, { status: 400 });
     }
 
     const { error } = await getSupabaseAdmin().from("waitlist").upsert(
-      { email: email.toLowerCase().trim(), source: source ?? null },
+      {
+        email: email.toLowerCase().trim(),
+        first_name: firstName?.trim() || null,
+        source: source ?? null,
+      },
       { onConflict: "email" }
     );
 
