@@ -1,23 +1,29 @@
--- Reports table: stores generated reports linked to Stripe sessions
+-- Reports table: stores generated reports
 create table if not exists reports (
-  id uuid primary key default gen_random_uuid(),
-  stripe_session_id text unique not null,
-  email text,
-  plan text not null check (plan in ('one-time', 'monthly')),
-  report_data jsonb not null,
-  created_at timestamptz not null default now()
+  id            uuid primary key default gen_random_uuid(),
+  payment_id    text,                          -- Lemon Squeezy order ID (set after payment)
+  email         text,
+  first_name    text,
+  plan          text not null default 'one-time',
+  report_data   jsonb not null,
+  is_paid       boolean not null default false,
+  -- Email sequence tracking
+  email_sent_at  timestamptz,
+  d3_email_sent  boolean not null default false,
+  d7_email_sent  boolean not null default false,
+  d30_email_sent boolean not null default false,
+  created_at    timestamptz not null default now()
 );
 
--- RLS: no public access — all access via service role only
 alter table reports enable row level security;
 
--- Waitlist table: stores emails for monthly plan waitlist
+-- Waitlist table
 create table if not exists waitlist (
-  id uuid primary key default gen_random_uuid(),
-  email text unique not null,
-  source text,
-  joined_at timestamptz not null default now()
+  id         uuid primary key default gen_random_uuid(),
+  email      text unique not null,
+  first_name text,
+  source     text,
+  joined_at  timestamptz not null default now()
 );
 
--- RLS: no public access — all access via service role only
 alter table waitlist enable row level security;

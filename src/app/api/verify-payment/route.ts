@@ -1,32 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const sessionId = searchParams.get("session_id");
+  const reportId = searchParams.get("reportId");
 
-  if (!sessionId) {
-    return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
+  if (!reportId) {
+    return NextResponse.json({ error: "Missing reportId" }, { status: 400 });
   }
 
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ["subscription"],
-    });
+    const { data, error } = await getSupabaseAdmin()
+      .from("reports")
+      .select("is_paid, plan")
+      .eq("id", reportId)
+      .single();
 
-    const plan = (session.metadata?.plan ?? "one-time") as "one-time" | "monthly";
-    const customerId = typeof session.customer === "string" ? session.customer : null;
-
-    let paid = false;
-    if (plan === "monthly") {
-      paid = session.status === "complete";
-    } else {
-      paid = session.payment_status === "paid";
+    if (error || !data) {
+      return NextResponse.json({ paid: false });
     }
 
-    return NextResponse.json({ paid, plan, customerId });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({
+      paid: data.is_paid,
+      plan: data.plan ?? "one-time",
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

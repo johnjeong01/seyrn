@@ -3,32 +3,34 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: NextRequest) {
   try {
-    const { stripeSessionId, email, plan, reportData } = (await req.json()) as {
-      stripeSessionId: string;
+    const { email, firstName, plan, reportData } = (await req.json()) as {
       email?: string;
-      plan: string;
+      firstName?: string;
+      plan?: string;
       reportData: unknown;
     };
 
-    if (!stripeSessionId || !reportData) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!reportData) {
+      return NextResponse.json({ error: "Missing reportData" }, { status: 400 });
     }
 
-    const { error } = await getSupabaseAdmin().from("reports").upsert(
-      {
-        stripe_session_id: stripeSessionId,
+    const { data, error } = await getSupabaseAdmin()
+      .from("reports")
+      .insert({
         email: email ?? null,
-        plan,
+        first_name: firstName ?? null,
+        plan: plan ?? "one-time",
         report_data: reportData,
-      },
-      { onConflict: "stripe_session_id" }
-    );
+        is_paid: false,
+      })
+      .select("id")
+      .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, reportId: data.id });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });

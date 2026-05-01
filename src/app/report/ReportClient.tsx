@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { OnboardingData } from "@/lib/onboarding-types";
@@ -10,12 +10,11 @@ import ReportSections from "./ReportSections";
 import UnlockBanner from "./UnlockBanner";
 
 const REPORT_CACHE_KEY = "seyrn-report-data";
-const ONBOARDING_KEY = "seyrn-onboarding-data";
-const PAID_KEY = "seyrn-paid";
-const PLAN_KEY = "seyrn-plan";
-const CUSTOMER_KEY = "seyrn-customer-id";
-const MAGIC_SENT_KEY = "seyrn-magic-sent";
-const REPORT_SAVED_KEY = "seyrn-report-saved";
+const ONBOARDING_KEY   = "seyrn-onboarding-data";
+const PAID_KEY         = "seyrn-paid";
+const PLAN_KEY         = "seyrn-plan";
+const REPORT_ID_KEY    = "seyrn-report-id";
+const MAGIC_SENT_KEY   = "seyrn-magic-sent";
 
 const LOADING_MESSAGES = [
   "Reading your turning points…",
@@ -64,13 +63,7 @@ function LoadingState() {
   );
 }
 
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div
       className="flex flex-col items-center justify-center text-center"
@@ -82,28 +75,15 @@ function ErrorState({
       >
         Generation Failed
       </p>
-      <p
-        className="font-sans text-sm mb-8 max-w-sm"
-        style={{ color: "var(--muted)" }}
-      >
+      <p className="font-sans text-sm mb-8 max-w-sm" style={{ color: "var(--muted)" }}>
         {message}
       </p>
       <button
         onClick={onRetry}
         className="font-sans text-xs tracking-widest uppercase px-6 py-3 transition-colors"
-        style={{
-          border: "1px solid var(--gold)",
-          color: "var(--gold)",
-          background: "transparent",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "var(--gold)";
-          e.currentTarget.style.color = "var(--ink)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "transparent";
-          e.currentTarget.style.color = "var(--gold)";
-        }}
+        style={{ border: "1px solid var(--gold)", color: "var(--gold)", background: "transparent" }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gold)"; e.currentTarget.style.color = "var(--ink)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--gold)"; }}
       >
         Try Again
       </button>
@@ -112,27 +92,23 @@ function ErrorState({
 }
 
 export default function ReportClient() {
-  const router = useRouter();
+  const router       = useRouter();
   const searchParams = useSearchParams();
 
-  const [data, setData] = useState<OnboardingData | null>(null);
-  const [report, setReport] = useState<ReportData | null>(null);
+  const [data,    setData]    = useState<OnboardingData | null>(null);
+  const [report,  setReport]  = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error,   setError]   = useState<string | null>(null);
 
   // Payment state
-  const [isPaid, setIsPaid] = useState(false);
-  const [plan, setPlan] = useState<"one-time" | "monthly" | null>(null);
-  const [customerId, setCustomerId] = useState<string | null>(null);
-  const stripeSessionIdRef = useRef<string | null>(null);
+  const [isPaid,    setIsPaid]    = useState(false);
+  const [plan,      setPlan]      = useState<"one-time" | "monthly" | null>(null);
+  const [reportId,  setReportId]  = useState<string | null>(null);
 
-  // Load onboarding data + check localStorage for payment status
+  // ── Load onboarding data + restore payment state ────────────────
   useEffect(() => {
     const saved = localStorage.getItem(ONBOARDING_KEY);
-    if (!saved) {
-      router.push("/onboarding");
-      return;
-    }
+    if (!saved) { router.push("/onboarding"); return; }
     try {
       setData(JSON.parse(saved) as OnboardingData);
     } catch {
@@ -140,100 +116,60 @@ export default function ReportClient() {
       return;
     }
 
-    // Restore payment status from localStorage
     if (localStorage.getItem(PAID_KEY) === "true") {
       setIsPaid(true);
       const savedPlan = localStorage.getItem(PLAN_KEY);
       if (savedPlan === "one-time" || savedPlan === "monthly") setPlan(savedPlan);
-      setCustomerId(localStorage.getItem(CUSTOMER_KEY));
     }
+    const savedId = localStorage.getItem(REPORT_ID_KEY);
+    if (savedId) setReportId(savedId);
   }, [router]);
 
-  // Verify Stripe session if redirected from checkout
+  // ── Verify LemonSqueezy payment from redirect URL ───────────────
   useEffect(() => {
-    const sessionId = searchParams.get("session_id");
-    if (!sessionId || isPaid) return;
+    const paramReportId = searchParams.get("reportId");
+    const paid          = searchParams.get("paid");
+    if (!paramReportId || paid !== "true" || isPaid) return;
 
-    async function verifySession() {
+    async function verifyPayment() {
       try {
-        const res = await fetch(`/api/verify-payment?session_id=${sessionId}`);
-        const body = (await res.json()) as {
-          paid?: boolean;
-          plan?: string;
-          customerId?: string | null;
-          error?: string;
-        };
+        const res  = await fetch(`/api/verify-payment?reportId=${paramReportId}`);
+        const body = (await res.json()) as { paid?: boolean; plan?: string; error?: string };
         if (body.paid) {
           const verifiedPlan = body.plan === "monthly" ? "monthly" : "one-time";
-
-          localStorage.setItem(PAID_KEY, "true");
-          localStorage.setItem(PLAN_KEY, verifiedPlan);
-          if (body.customerId) localStorage.setItem(CUSTOMER_KEY, body.customerId);
-
-          // Capture session ID for later DB save (after report loads)
-          stripeSessionIdRef.current = sessionId;
-
-          setCustomerId(body.customerId ?? null);
+          localStorage.setItem(PAID_KEY,      "true");
+          localStorage.setItem(PLAN_KEY,      verifiedPlan);
+          localStorage.setItem(REPORT_ID_KEY, paramReportId!);
+          setReportId(paramReportId!);
           setPlan(verifiedPlan);
           setIsPaid(true);
         }
-      } catch {
-        // Verification failed — user stays in free state
-      } finally {
-        // Clean session_id from URL
-        router.replace("/report");
-      }
+      } catch { /* user stays in free state */ }
+      finally  { router.replace("/report"); }
     }
 
-    verifySession();
+    verifyPayment();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // After payment confirmed + report loaded: save to DB and send magic link
+  // ── Send magic link once after payment confirmed ────────────────
   useEffect(() => {
-    if (!isPaid || !report) return;
-    // Guard: only run once per session
-    if (localStorage.getItem(REPORT_SAVED_KEY) === "true" && !stripeSessionIdRef.current) return;
-
-    const sessionId = stripeSessionIdRef.current;
-    const raw = localStorage.getItem(ONBOARDING_KEY);
-    let email: string | null = null;
-    const savedPlan = localStorage.getItem(PLAN_KEY) ?? "one-time";
+    if (!isPaid) return;
     try {
-      if (raw) email = (JSON.parse(raw) as { email?: string }).email ?? null;
+      const raw   = localStorage.getItem(ONBOARDING_KEY);
+      const email = raw ? (JSON.parse(raw) as { email?: string }).email ?? null : null;
+      if (email && !localStorage.getItem(MAGIC_SENT_KEY)) {
+        localStorage.setItem(MAGIC_SENT_KEY, "true");
+        fetch("/api/auth/send-magic-link", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ email, redirectTo: `${window.location.origin}/report` }),
+        }).catch(() => { /* silent */ });
+      }
     } catch { /* ignore */ }
+  }, [isPaid]);
 
-    // Save report to DB (fire-and-forget)
-    if (sessionId && localStorage.getItem(REPORT_SAVED_KEY) !== "true") {
-      localStorage.setItem(REPORT_SAVED_KEY, "true");
-      stripeSessionIdRef.current = null;
-      fetch("/api/reports/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          stripeSessionId: sessionId,
-          email,
-          plan: savedPlan,
-          reportData: report,
-        }),
-      }).catch(() => { /* silent */ });
-    }
-
-    // Send magic link once (fire-and-forget)
-    if (email && !localStorage.getItem(MAGIC_SENT_KEY)) {
-      localStorage.setItem(MAGIC_SENT_KEY, "true");
-      fetch("/api/auth/send-magic-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          redirectTo: `${window.location.origin}/report`,
-        }),
-      }).catch(() => { /* silent */ });
-    }
-  }, [isPaid, report]);
-
-  // Generate or load cached report
+  // ── Generate (or load cached) report ───────────────────────────
   const generateReport = useCallback(
     async (onboardingData: OnboardingData, forceRefresh = false) => {
       if (!forceRefresh) {
@@ -242,9 +178,7 @@ export default function ReportClient() {
           try {
             setReport(JSON.parse(cached) as ReportData);
             return;
-          } catch {
-            // cache corrupted — fall through
-          }
+          } catch { /* cache corrupted — fall through */ }
         }
       } else {
         localStorage.removeItem(REPORT_CACHE_KEY);
@@ -255,9 +189,9 @@ export default function ReportClient() {
 
       try {
         const res = await fetch("/api/report", {
-          method: "POST",
+          method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: onboardingData }),
+          body:    JSON.stringify({ data: onboardingData }),
         });
 
         if (!res.ok) {
@@ -265,15 +199,12 @@ export default function ReportClient() {
           try {
             const errBody = (await res.json()) as { error?: string };
             if (errBody.error) errorMsg = errBody.error;
-          } catch {
-            // non-JSON response (e.g. Vercel HTML error page)
-          }
+          } catch { /* non-JSON */ }
           throw new Error(errorMsg);
         }
 
-        // Accumulate streamed text
         if (!res.body) throw new Error("No response body");
-        const reader = res.body.getReader();
+        const reader  = res.body.getReader();
         const decoder = new TextDecoder();
         let text = "";
         while (true) {
@@ -283,18 +214,40 @@ export default function ReportClient() {
         }
         text += decoder.decode();
 
-        // Check for error sentinel
         const errIdx = text.indexOf("\x00ERR:");
         if (errIdx !== -1) throw new Error(text.slice(errIdx + 5).trim());
 
-        // Extract outermost JSON object (strips any accidental wrapper text)
         const start = text.indexOf("{");
-        const end = text.lastIndexOf("}");
+        const end   = text.lastIndexOf("}");
         if (start === -1 || end === -1) throw new Error("Invalid response format");
-        const report = JSON.parse(text.slice(start, end + 1)) as ReportData;
-        report.generated_at = new Date().toISOString();
-        localStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(report));
-        setReport(report);
+
+        const generatedReport = JSON.parse(text.slice(start, end + 1)) as ReportData;
+        generatedReport.generated_at = new Date().toISOString();
+        localStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(generatedReport));
+        setReport(generatedReport);
+
+        // Pre-save report to DB (unpaid) so we have a reportId for checkout
+        if (!localStorage.getItem(REPORT_ID_KEY)) {
+          try {
+            const raw       = localStorage.getItem(ONBOARDING_KEY);
+            const parsed    = raw ? (JSON.parse(raw) as { email?: string; firstName?: string }) : {};
+            const saveRes   = await fetch("/api/reports/save", {
+              method:  "POST",
+              headers: { "Content-Type": "application/json" },
+              body:    JSON.stringify({
+                email:      parsed.email ?? null,
+                firstName:  parsed.firstName ?? null,
+                plan:       "one-time",
+                reportData: generatedReport,
+              }),
+            });
+            const saveBody  = (await saveRes.json()) as { reportId?: string };
+            if (saveBody.reportId) {
+              setReportId(saveBody.reportId);
+              localStorage.setItem(REPORT_ID_KEY, saveBody.reportId);
+            }
+          } catch { /* silent — checkout will still work without pre-saved reportId */ }
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Unknown error";
         setError(msg);
@@ -313,22 +266,6 @@ export default function ReportClient() {
     if (data) generateReport(data, true);
   }, [data, generateReport]);
 
-  // Open Stripe Customer Portal (monthly subscribers only)
-  const handlePortal = useCallback(async () => {
-    if (!customerId) return;
-    try {
-      const res = await fetch("/api/portal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId }),
-      });
-      const body = (await res.json()) as { url?: string };
-      if (body.url) window.location.href = body.url;
-    } catch {
-      // silent fail
-    }
-  }, [customerId]);
-
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -339,9 +276,7 @@ export default function ReportClient() {
     );
   }
 
-  const validTPs = data.turningPoints.filter(
-    (tp) => tp.year !== null && tp.title.length > 0
-  );
+  const validTPs    = data.turningPoints.filter((tp) => tp.year !== null && tp.title.length > 0);
   const currentYear = new Date().getFullYear();
 
   return (
@@ -355,30 +290,6 @@ export default function ReportClient() {
         >
           <span>←</span> Retake
         </Link>
-
-        {/* Manage subscription — monthly subscribers only */}
-        {isPaid && plan === "monthly" && customerId && (
-          <button
-            onClick={handlePortal}
-            className="font-sans transition-colors"
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--muted)",
-              fontSize: "0.7rem",
-              letterSpacing: "0.05em",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--cream)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--muted)";
-            }}
-          >
-            Manage subscription
-          </button>
-        )}
       </div>
 
       {/* Report header */}
@@ -391,20 +302,13 @@ export default function ReportClient() {
         </p>
         <h1
           className="font-serif font-light mb-6"
-          style={{
-            fontSize: "clamp(2rem, 5vw, 3.5rem)",
-            lineHeight: 1.1,
-            color: "var(--cream)",
-          }}
+          style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", lineHeight: 1.1, color: "var(--cream)" }}
         >
           {validTPs.length} turning {validTPs.length === 1 ? "point" : "points"}.
           <br />
           One pattern.
         </h1>
-        <p
-          className="font-sans font-light text-sm"
-          style={{ color: "var(--muted)" }}
-        >
+        <p className="font-sans font-light text-sm" style={{ color: "var(--muted)" }}>
           Ages {data.currentAge} → {data.futureAge} · {currentYear}
         </p>
       </div>
@@ -420,12 +324,17 @@ export default function ReportClient() {
 
         {loading && <LoadingState />}
 
-        {error && !loading && (
-          <ErrorState message={error} onRetry={handleRetry} />
-        )}
+        {error && !loading && <ErrorState message={error} onRetry={handleRetry} />}
 
         {report && !loading && (
-          <ReportSections report={report} isPaid={isPaid} plan={plan} turningPoints={data.turningPoints} currentSeason={data.currentSeason} firstName={data.firstName} />
+          <ReportSections
+            report={report}
+            isPaid={isPaid}
+            plan={plan}
+            turningPoints={data.turningPoints}
+            currentSeason={data.currentSeason}
+            firstName={data.firstName}
+          />
         )}
       </div>
 
@@ -433,6 +342,7 @@ export default function ReportClient() {
       {report && !loading && (
         <UnlockBanner
           show={!isPaid}
+          reportId={reportId}
           predictedYear={report.sections.next_turning_point.predicted_year}
         />
       )}
