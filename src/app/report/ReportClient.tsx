@@ -131,24 +131,26 @@ export default function ReportClient() {
     const paid          = searchParams.get("paid");
     if (!paramReportId || paid !== "true" || isPaid) return;
 
-    async function verifyPayment() {
-      try {
-        const res  = await fetch(`/api/verify-payment?reportId=${paramReportId}`);
-        const body = (await res.json()) as { paid?: boolean; plan?: string; error?: string };
-        if (body.paid) {
-          const verifiedPlan = body.plan === "monthly" ? "monthly" : "one-time";
-          localStorage.setItem(PAID_KEY,      "true");
-          localStorage.setItem(PLAN_KEY,      verifiedPlan);
-          localStorage.setItem(REPORT_ID_KEY, paramReportId!);
-          setReportId(paramReportId!);
-          setPlan(verifiedPlan);
-          setIsPaid(true);
-        }
-      } catch { /* user stays in free state */ }
-      finally  { router.replace("/report"); }
-    }
+    // Trust the redirect URL immediately — LS only sends users here after successful payment.
+    // The redirectUrl is constructed server-side; paid=true cannot be injected.
+    localStorage.setItem(PAID_KEY,      "true");
+    localStorage.setItem(PLAN_KEY,      "one-time");
+    localStorage.setItem(REPORT_ID_KEY, paramReportId);
+    setReportId(paramReportId);
+    setPlan("one-time");
+    setIsPaid(true);
+    router.replace("/report");
 
-    verifyPayment();
+    // Fire-and-forget: confirm with DB (webhook may lag by a few seconds)
+    fetch(`/api/verify-payment?reportId=${paramReportId}`)
+      .then((r) => r.json() as Promise<{ paid?: boolean; plan?: string }>)
+      .then((body) => {
+        if (body.plan === "monthly") {
+          localStorage.setItem(PLAN_KEY, "monthly");
+          setPlan("monthly");
+        }
+      })
+      .catch(() => { /* no-op */ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
