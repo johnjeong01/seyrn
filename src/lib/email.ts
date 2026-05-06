@@ -1,9 +1,11 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM = "Seyrn <noreply@seyrn.app>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://seyrn.app";
+
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 // ── Email 1: Report ready (sent immediately after payment) ──────
 
@@ -19,7 +21,7 @@ export async function sendReportReadyEmail({
   const name = firstName?.trim() || null;
   const greeting = name ? `${name},` : "Hi,";
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: name
@@ -52,7 +54,7 @@ export async function sendD3Email({
   const name = firstName?.trim() || null;
   const greeting = name ? `${name},` : "Hi,";
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: "Did something hit differently?",
@@ -87,7 +89,7 @@ export async function sendD7Email({
     ? `<p style="font-size: 16px; line-height: 1.7; color: #e8dfd0; font-style: italic; border-left: 2px solid #c9a84c; padding-left: 16px; margin: 24px 0;">"${nextTurningPointSummary}"</p>`
     : "";
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: "The one thing in your report",
@@ -118,7 +120,7 @@ export async function sendD30Email({
   const greeting = name ? `${name},` : "Hi,";
   const waitlistUrl = `${APP_URL}/#pricing`;
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: "Monthly is almost here",
