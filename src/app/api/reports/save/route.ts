@@ -3,7 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, firstName, plan, reportData } = (await req.json()) as {
+    const { id, email, firstName, plan, reportData } = (await req.json()) as {
+      id?: string;
       email?: string;
       firstName?: string;
       plan?: string;
@@ -14,15 +15,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing reportData" }, { status: 400 });
     }
 
+    const row: Record<string, unknown> = {
+      email:       email ?? null,
+      first_name:  firstName ?? null,
+      plan:        plan ?? "one-time",
+      report_data: reportData,
+      is_paid:     false,
+    };
+    if (id) row.id = id;
+
     const { data, error } = await getSupabaseAdmin()
       .from("reports")
-      .insert({
-        email: email ?? null,
-        first_name: firstName ?? null,
-        plan: plan ?? "one-time",
-        report_data: reportData,
-        is_paid: false,
-      })
+      .insert(row)
       .select("id")
       .single();
 

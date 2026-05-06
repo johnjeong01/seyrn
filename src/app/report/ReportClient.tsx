@@ -226,27 +226,31 @@ export default function ReportClient() {
         localStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(generatedReport));
         setReport(generatedReport);
 
-        // Pre-save report to DB (unpaid) so we have a reportId for checkout
-        if (!localStorage.getItem(REPORT_ID_KEY)) {
+        // Ensure we always have a reportId for checkout — generate one client-side immediately
+        const existingId = localStorage.getItem(REPORT_ID_KEY);
+        const localId    = existingId ?? crypto.randomUUID();
+        if (!existingId) {
+          localStorage.setItem(REPORT_ID_KEY, localId);
+          setReportId(localId);
+        }
+
+        // Try to pre-save report to DB; use the same localId so checkout/webhook can find it
+        if (!existingId) {
           try {
             const raw       = localStorage.getItem(ONBOARDING_KEY);
             const parsed    = raw ? (JSON.parse(raw) as { email?: string; firstName?: string }) : {};
-            const saveRes   = await fetch("/api/reports/save", {
+            await fetch("/api/reports/save", {
               method:  "POST",
               headers: { "Content-Type": "application/json" },
               body:    JSON.stringify({
+                id:         localId,
                 email:      parsed.email ?? null,
                 firstName:  parsed.firstName ?? null,
                 plan:       "one-time",
                 reportData: generatedReport,
               }),
             });
-            const saveBody  = (await saveRes.json()) as { reportId?: string };
-            if (saveBody.reportId) {
-              setReportId(saveBody.reportId);
-              localStorage.setItem(REPORT_ID_KEY, saveBody.reportId);
-            }
-          } catch { /* silent — checkout will still work without pre-saved reportId */ }
+          } catch { /* silent — checkout uses localId regardless */ }
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Unknown error";
