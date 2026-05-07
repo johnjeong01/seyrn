@@ -81,7 +81,7 @@ function DataBasis({ content }: { content: string }) {
   return (
     <p
       className="font-sans text-xs leading-relaxed mt-4"
-      style={{ color: "var(--muted)", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "0.75rem" }}
+      style={{ color: "rgba(232,223,208,0.5)", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "0.75rem" }}
     >
       {content}
     </p>

@@ -91,7 +91,7 @@ export default function WaitlistModal({ onClose, prefillEmail }: Props) {
             >
               We&apos;ll let you know when Monthly opens.
             </p>
-            <p className="font-sans text-sm mb-8" style={{ color: "var(--muted)" }}>
+            <p className="font-sans text-sm mb-8" style={{ color: "var(--warm)" }}>
               We&apos;ll email{" "}
               <span style={{ color: "var(--cream)" }}>{email}</span> when the monthly plan
               launches with early access pricing.
@@ -125,7 +125,7 @@ export default function WaitlistModal({ onClose, prefillEmail }: Props) {
             >
               Join the waitlist
             </p>
-            <p className="font-sans text-sm mb-8 leading-relaxed" style={{ color: "var(--muted)" }}>
+            <p className="font-sans text-sm mb-8 leading-relaxed" style={{ color: "var(--warm)" }}>
               Be first to access the monthly plan when it launches. Early access members get
               a discounted rate locked in for life.
             </p>

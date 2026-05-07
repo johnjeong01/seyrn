@@ -314,7 +314,7 @@ export default function ReportClient() {
           <br />
           One pattern.
         </h1>
-        <p className="font-sans font-light text-sm" style={{ color: "var(--muted)" }}>
+        <p className="font-sans font-light text-sm" style={{ color: "var(--warm)" }}>
           Ages {data.currentAge} → {data.futureAge} · {currentYear}
         </p>
       </div>

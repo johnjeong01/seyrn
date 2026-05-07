@@ -88,7 +88,7 @@ export default function Pricing() {
           >
             Less than one therapy session.
           </h2>
-          <p className="font-sans font-light text-[var(--muted)] max-w-md mx-auto text-sm leading-relaxed">
+          <p className="font-sans font-light text-[var(--warm)] max-w-md mx-auto text-sm leading-relaxed">
             More self-knowledge than a decade of journaling.
           </p>
         </div>
@@ -122,7 +122,7 @@ export default function Pricing() {
               </span>
               <span className="font-sans text-sm text-[var(--muted)]">{oneTimePlan.period}</span>
             </div>
-            <p className="font-sans font-light text-[var(--muted)] text-sm mb-8 leading-relaxed">
+            <p className="font-sans font-light text-[var(--warm)] text-sm mb-8 leading-relaxed">
               {oneTimePlan.description}
             </p>
             <ul className="flex flex-col gap-3 mb-8">
@@ -170,7 +170,7 @@ export default function Pricing() {
               </span>
               <span className="font-sans text-sm text-[var(--muted)]">{waitlistPlan.period}</span>
             </div>
-            <p className="font-sans font-light text-[var(--muted)] text-sm mb-8 leading-relaxed">
+            <p className="font-sans font-light text-[var(--warm)] text-sm mb-8 leading-relaxed">
               {waitlistPlan.description}
             </p>
             <ul className="flex flex-col gap-3 mb-8">

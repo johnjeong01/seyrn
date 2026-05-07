@@ -59,7 +59,7 @@ function Section({
 
 function Body({ children }: { children: React.ReactNode }) {
   return (
-    <p className="font-sans text-sm text-[var(--muted)] leading-[1.85]">
+    <p className="font-sans text-sm text-[var(--warm)] leading-[1.85]">
       {children}
     </p>
   );
@@ -77,7 +77,7 @@ function ThemeCard({ title, body }: { title: string; body: string }) {
       <p className="font-serif text-[var(--cream)] mb-3" style={{ fontSize: "1rem" }}>
         {title}
       </p>
-      <p className="font-sans text-sm text-[var(--muted)] leading-[1.8]">{body}</p>
+      <p className="font-sans text-sm text-[var(--warm)] leading-[1.8]">{body}</p>
     </div>
   );
 }
@@ -91,7 +91,7 @@ function Move({ number, text }: { number: string; text: string }) {
       >
         {number}
       </span>
-      <p className="font-sans text-sm text-[var(--muted)] leading-[1.8]">{text}</p>
+      <p className="font-sans text-sm text-[var(--warm)] leading-[1.8]">{text}</p>
     </div>
   );
 }
@@ -124,7 +124,7 @@ export default function ReportPreview() {
           >
             Sharp. Specific. <em className="italic text-[var(--gold)]">Yours.</em>
           </h2>
-          <p className="font-sans text-sm text-[var(--muted)] leading-relaxed max-w-lg mx-auto">
+          <p className="font-sans text-sm text-[var(--warm)] leading-relaxed max-w-lg mx-auto">
             Every insight references specific turning points — specific years, specific patterns.
             Below is a real sample analysis for Alex, 37.
           </p>
@@ -273,7 +273,7 @@ export default function ReportPreview() {
             <br />
             <em className="italic text-[var(--gold)]">Yours is different.</em>
           </h3>
-          <p className="font-sans text-sm text-[var(--muted)] leading-[1.85] mb-10 max-w-md mx-auto">
+          <p className="font-sans text-sm text-[var(--warm)] leading-[1.85] mb-10 max-w-md mx-auto">
             Every insight above references Alex&apos;s specific turning points — specific years, specific people, specific decisions.
             <br /><br />
             Your report references yours. Same depth. Entirely different analysis. Built from what you&apos;ve actually lived.

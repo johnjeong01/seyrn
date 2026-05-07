@@ -132,7 +132,7 @@ export default function HowItWorks() {
               </h3>
 
               {/* Body */}
-              <p className="font-sans font-light text-[var(--muted)] text-sm leading-relaxed">
+              <p className="font-sans font-light text-[var(--warm)] text-sm leading-relaxed">
                 {step.body}
               </p>
 

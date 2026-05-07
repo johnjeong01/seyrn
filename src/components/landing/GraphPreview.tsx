@@ -94,7 +94,7 @@ export default function GraphPreview() {
               Every pattern.
             </h2>
           </div>
-          <p className="font-sans font-light text-[var(--muted)] text-sm max-w-xs leading-relaxed">
+          <p className="font-sans font-light text-[var(--warm)] text-sm max-w-xs leading-relaxed">
             This is what your life looks like as data. Sample graph below — yours will be built from your actual turning points.
           </p>
         </div>
@@ -115,19 +115,19 @@ export default function GraphPreview() {
 
           {/* Legend */}
           <div className="flex items-center gap-6 mb-6 flex-wrap">
-            <span className="flex items-center gap-2 font-sans text-xs text-[var(--muted)]">
+            <span className="flex items-center gap-2 font-sans text-xs text-[var(--warm)]/70">
               <span className="w-6 h-px bg-[var(--gold)]" />
               Past
             </span>
-            <span className="flex items-center gap-2 font-sans text-xs text-[var(--muted)]">
+            <span className="flex items-center gap-2 font-sans text-xs text-[var(--warm)]/70">
               <span className="w-6 h-px bg-[var(--gold)]/30 border-dashed border-t border-[var(--gold)]/30" />
               Predicted
             </span>
-            <span className="flex items-center gap-2 font-sans text-xs text-[var(--muted)]">
+            <span className="flex items-center gap-2 font-sans text-xs text-[var(--warm)]/70">
               <span className="w-2.5 h-2.5 rounded-full bg-[#4a6355] inline-block" />
               High energy
             </span>
-            <span className="flex items-center gap-2 font-sans text-xs text-[var(--muted)]">
+            <span className="flex items-center gap-2 font-sans text-xs text-[var(--warm)]/70">
               <span className="w-2.5 h-2.5 rounded-full bg-[#8b4a2f] inline-block" />
               Low energy
             </span>

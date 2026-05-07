@@ -189,7 +189,7 @@ function TPChip({
         style={{ background: energyColor(tp.energyLevel) }}
       />
       <div className="min-w-0">
-        <p className="font-sans text-[9px] tracking-widest uppercase mb-0.5" style={{ color: "var(--muted)" }}>
+        <p className="font-sans text-[10px] tracking-widest uppercase mb-0.5" style={{ color: "var(--muted)" }}>
           {tp.year}
         </p>
         <p
@@ -228,7 +228,7 @@ function TPDetail({ tp, currentAge }: { tp: TurningPoint; currentAge: number }) 
           </h3>
         </div>
         <div className="flex-none text-right">
-          <p className="font-sans text-[9px] tracking-widest uppercase mb-1" style={{ color: "var(--muted)" }}>
+          <p className="font-sans text-[10px] tracking-widest uppercase mb-1" style={{ color: "var(--muted)" }}>
             Energy
           </p>
           <p className="font-serif font-light" style={{ fontSize: "2.5rem", lineHeight: 1, color }}>
@@ -240,7 +240,7 @@ function TPDetail({ tp, currentAge }: { tp: TurningPoint; currentAge: number }) 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {tp.emotions.length > 0 && (
           <div>
-            <p className="font-sans text-[9px] tracking-widest uppercase mb-2" style={{ color: "var(--muted)" }}>
+            <p className="font-sans text-[10px] tracking-widest uppercase mb-2" style={{ color: "var(--muted)" }}>
               Emotions
             </p>
             <div className="flex flex-wrap gap-1">
@@ -258,7 +258,7 @@ function TPDetail({ tp, currentAge }: { tp: TurningPoint; currentAge: number }) 
         )}
         {tp.outcome && (
           <div>
-            <p className="font-sans text-[9px] tracking-widest uppercase mb-2" style={{ color: "var(--muted)" }}>
+            <p className="font-sans text-[10px] tracking-widest uppercase mb-2" style={{ color: "var(--muted)" }}>
               Outcome
             </p>
             <p className="font-sans text-xs" style={{ color: "var(--warm)" }}>
@@ -268,7 +268,7 @@ function TPDetail({ tp, currentAge }: { tp: TurningPoint; currentAge: number }) 
         )}
         {tp.personType && (
           <div>
-            <p className="font-sans text-[9px] tracking-widest uppercase mb-2" style={{ color: "var(--muted)" }}>
+            <p className="font-sans text-[10px] tracking-widest uppercase mb-2" style={{ color: "var(--muted)" }}>
               With
             </p>
             <p className="font-sans text-xs capitalize" style={{ color: "var(--warm)" }}>
@@ -385,7 +385,7 @@ export default function LifeGraph({ data }: { data: OnboardingData }) {
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-2">
             <div className="h-px w-7" style={{ background: "var(--gold)" }} />
-            <span className="font-sans text-[9px] tracking-widest" style={{ color: "var(--muted)" }}>
+            <span className="font-sans text-[10px] tracking-widest" style={{ color: "var(--muted)" }}>
               PAST
             </span>
           </div>
@@ -398,7 +398,7 @@ export default function LifeGraph({ data }: { data: OnboardingData }) {
                 strokeDasharray="5 4"
               />
             </svg>
-            <span className="font-sans text-[9px] tracking-widest" style={{ color: "var(--muted)" }}>
+            <span className="font-sans text-[10px] tracking-widest" style={{ color: "var(--muted)" }}>
               PROJECTED
             </span>
           </div>
@@ -409,7 +409,7 @@ export default function LifeGraph({ data }: { data: OnboardingData }) {
       <div className="flex items-center gap-3 mb-1">
         <div className="flex flex-col justify-between" style={{ height: 320, paddingTop: 16, paddingBottom: 24 }}>
           {[10, 7, 5, 3, 1].map((n) => (
-            <span key={n} className="font-sans text-[9px]" style={{ color: "var(--muted)", lineHeight: 1 }}>
+            <span key={n} className="font-sans text-[10px]" style={{ color: "var(--muted)", lineHeight: 1 }}>
               {n}
             </span>
           ))}
@@ -486,12 +486,12 @@ export default function LifeGraph({ data }: { data: OnboardingData }) {
       <div className="flex justify-end gap-6 mt-2 mb-10">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: "var(--gold)" }} />
-          <span className="font-sans text-[9px] tracking-widest" style={{ color: "var(--muted)" }}>
+          <span className="font-sans text-[10px] tracking-widest" style={{ color: "var(--muted)" }}>
             NOW  {currentEnergy}/10
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="font-sans text-[9px] tracking-widest" style={{ color: "rgba(201,168,76,0.5)" }}>
+          <span className="font-sans text-[10px] tracking-widest" style={{ color: "rgba(201,168,76,0.5)" }}>
             NEXT PIVOT  ~{nextPeakYear}
           </span>
         </div>
