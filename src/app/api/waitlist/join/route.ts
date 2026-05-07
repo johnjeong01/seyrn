@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { sendWaitlistConfirmationEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,9 +10,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Valid email required" }, { status: 400 });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if already registered
+    const { data: existing } = await getSupabaseAdmin()
+      .from("waitlist")
+      .select("email")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+
     const { error } = await getSupabaseAdmin().from("waitlist").upsert(
       {
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         first_name: firstName?.trim() || null,
         source: source ?? null,
       },
@@ -20,6 +30,12 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Send confirmation email only on first registration
+    if (!existing) {
+      sendWaitlistConfirmationEmail({ to: normalizedEmail, firstName: firstName ?? null })
+        .catch(() => { /* silent — DB record is saved regardless */ });
     }
 
     return NextResponse.json({ success: true });

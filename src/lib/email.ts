@@ -40,6 +40,35 @@ export async function sendReportReadyEmail({
   });
 }
 
+// ── Waitlist confirmation ────────────────────────────────────────
+
+export async function sendWaitlistConfirmationEmail({
+  to,
+  firstName,
+}: {
+  to: string;
+  firstName?: string | null;
+}) {
+  const name = firstName?.trim() || null;
+  const greeting = name ? `${name},` : "Hi,";
+
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: "You're on the Seyrn waitlist",
+    html: `
+<div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; padding: 48px 24px; background: #0f0e0c; color: #f5f0e8;">
+  <p style="font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: #c9a84c; margin-bottom: 32px;">SEYRN</p>
+  <p style="font-size: 17px; line-height: 1.6; margin-bottom: 16px;">${greeting}</p>
+  <p style="font-size: 17px; line-height: 1.6; margin-bottom: 16px;">You're on the list.</p>
+  <p style="font-size: 17px; line-height: 1.6; margin-bottom: 32px;">When the Monthly plan opens, you'll hear first — with early access pricing locked in for life.</p>
+  <p style="font-size: 14px; line-height: 1.8; color: #7a7268; margin-bottom: 48px;">In the meantime, if you haven't run your pattern analysis yet, it takes 10 minutes and it's free to start.</p>
+  <a href="${APP_URL}/onboarding" style="display: inline-block; background: transparent; color: #c9a84c; text-decoration: none; padding: 14px 32px; font-family: sans-serif; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; border: 1px solid #c9a84c; margin-bottom: 48px;">Discover Your Pattern →</a>
+  <p style="font-size: 13px; color: #7a7268; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 24px;">— Seyrn</p>
+</div>`,
+  });
+}
+
 // ── Email 2: D+3 ────────────────────────────────────────────────
 
 export async function sendD3Email({
