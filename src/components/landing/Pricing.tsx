@@ -30,12 +30,12 @@ const waitlistPlan = {
   label: "Monthly",
   price: "$9.99",
   period: "per month",
-  description: "Your pattern sharpens every time we re-analyze it. Designed for sustained growth.",
+  description: "The longer you use Seyrn, the sharper your choices become.",
   features: [
     "Everything in One-Time",
-    "Quarterly report updates",
-    "Pattern accuracy improves over time",
-    "Daily Pattern Journal",
+    "Quarterly pattern updates",
+    "Pattern accuracy deepens over time",
+    "Daily email report — one insight, every morning, from your data",
     "Personalized daily strategy",
     "Real-time graph updates",
   ],
@@ -177,7 +177,14 @@ export default function Pricing() {
               {waitlistPlan.features.map((f: string, i: number) => (
                 <li key={i} className="flex items-start gap-2.5 font-sans text-sm text-[var(--warm)]">
                   <Check />
-                  <span>{f}</span>
+                  <span className="flex items-center gap-2 flex-wrap">
+                    {f}
+                    {i === 3 && (
+                      <span className="font-sans text-[9px] tracking-widest uppercase px-1.5 py-0.5 bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
+                        Coming Soon
+                      </span>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>

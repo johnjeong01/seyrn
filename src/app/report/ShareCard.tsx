@@ -176,7 +176,7 @@ interface ShareData {
   n: string;
   a: string;
   s: [string, string] | ["", ""];
-  y: number;
+  y?: number;
   m: number | null;
   sea: string | null;
   tps: Array<{ yr: number; e: number }>;
@@ -193,7 +193,7 @@ function buildShareData(
     n: report.pattern_name,
     a: report.pattern_archetype.slice(0, 120),
     s: report.share_sentences ?? ["", ""],
-    y: report.sections.next_turning_point.predicted_year,
+    y: undefined,
     m: avgIntervalMonths(tps),
     sea: season,
     tps: tps

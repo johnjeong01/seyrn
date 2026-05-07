@@ -1,68 +1,45 @@
-export interface ReportTheme {
-  title: string;
+export interface PatternSection {
+  summary: string;
+  detail: string;
+  data_basis: string;
+  today: string;
+}
+
+export interface NextTurningPoint {
+  summary: string;
+  timeframe: string;
+  detail: string;
+  preparation: string;
+  today: string;
+}
+
+export interface OneThingNow {
+  statement: string;
+  reason: string;
+  today: string;
+}
+
+export interface SeasonDiagnosis {
+  current: string;
   description: string;
-  evidence: string;
+  today: string;
 }
 
-export interface ReportMove {
-  title: string;
-  action: string;
-}
-
-export interface ForecastYear {
-  year: number;
-  energy: number;
-  theme: string;
-}
-
-export interface ReportSection<T> {
-  headline: string;
-  body?: string;
-  data: T;
-}
-
-export interface LifePatternData {
-  body: string;
-}
-
-export interface RecurringThemesData {
-  themes: ReportTheme[];
-  synthesis: string;
-}
-
-export interface NextTurningPointData {
-  predicted_year: number;
-  energy_forecast: number;
-  trigger: string;
-  body: string;
-}
-
-export interface StrategyData {
-  core_insight: string;
-  moves: ReportMove[];
-  body: string;
-}
-
-export interface ActionPlanData {
-  timeframes: {
-    "90_days": string;
-    "6_months": string;
-    "1_year": string;
-  };
-}
-
-export interface LifeForecastData {
-  forecast_years: ForecastYear[];
-  closing: string;
+export interface PatternWarning {
+  summary: string;
+  detail: string;
+  today: string;
 }
 
 export interface ReportSections {
-  life_pattern: { headline: string } & LifePatternData;
-  recurring_themes: { headline: string } & RecurringThemesData;
-  next_turning_point: { headline: string } & NextTurningPointData;
-  strategy: { headline: string } & StrategyData;
-  action_plan: { headline: string } & ActionPlanData;
-  life_forecast: { headline: string } & LifeForecastData;
+  energy_cycle: PatternSection;
+  relationship_pattern: PatternSection;
+  risk_pattern: PatternSection;
+  emotion_pattern: PatternSection;
+  next_turning_point: NextTurningPoint;
+  one_thing_now: OneThingNow;
+  season_diagnosis: SeasonDiagnosis;
+  pattern_warning: PatternWarning;
 }
 
 export interface ReportData {

@@ -9,7 +9,7 @@ import LifeGraph from "./LifeGraph";
 import ReportSections from "./ReportSections";
 import UnlockBanner from "./UnlockBanner";
 
-const REPORT_CACHE_KEY = "seyrn-report-data";
+const REPORT_CACHE_KEY = "seyrn-report-data-v2";
 const ONBOARDING_KEY   = "seyrn-onboarding-data";
 const PAID_KEY         = "seyrn-paid";
 const PLAN_KEY         = "seyrn-plan";
@@ -349,7 +349,6 @@ export default function ReportClient() {
         <UnlockBanner
           show={!isPaid}
           reportId={reportId}
-          predictedYear={report.sections.next_turning_point.predicted_year}
         />
       )}
     </div>

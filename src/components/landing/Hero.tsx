@@ -103,17 +103,22 @@ export default function Hero() {
         <h1
           className="font-serif font-light text-[var(--cream)] mb-6"
           style={{
-            fontSize: "clamp(3.5rem, 8vw, 7rem)",
-            lineHeight: 1.02,
+            fontSize: "clamp(2.8rem, 6.5vw, 5.5rem)",
+            lineHeight: 1.08,
             letterSpacing: "-0.02em",
             opacity: 0,
             animation: "fadeUp 1s ease-out 0.35s forwards",
           }}
         >
-          Your life has
+          You can&apos;t change yesterday.
           <br />
+          But you can understand it.
+          <br />
+          And that changes everything
+          <br />
+          about{" "}
           <em
-            className="not-italic text-gold-gradient"
+            className="not-italic"
             style={{
               background: "linear-gradient(135deg, #e8c97a 0%, #c9a84c 60%)",
               WebkitBackgroundClip: "text",
@@ -121,7 +126,7 @@ export default function Hero() {
               backgroundClip: "text",
             }}
           >
-            a pattern.
+            today.
           </em>
         </h1>
 
@@ -135,9 +140,9 @@ export default function Hero() {
             animation: "fadeUp 0.9s ease-out 0.55s forwards",
           }}
         >
-          Most people repeat theirs without knowing it.
+          Seyrn analyzes the patterns in your past to help you make better choices today.
           <br className="hidden sm:block" />
-          Seyrn shows you yours — so you can design what comes next.
+          Not fortune-telling. Pattern recognition.
         </p>
 
         {/* CTA */}

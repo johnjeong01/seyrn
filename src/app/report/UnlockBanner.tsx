@@ -5,10 +5,9 @@ import { useState, useEffect } from "react";
 interface Props {
   show: boolean;
   reportId: string | null;
-  predictedYear?: number;
 }
 
-export default function UnlockBanner({ show, reportId, predictedYear }: Props) {
+export default function UnlockBanner({ show, reportId }: Props) {
   const [visible,       setVisible]       = useState(false);
   const [loading,       setLoading]       = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -26,8 +25,6 @@ export default function UnlockBanner({ show, reportId, predictedYear }: Props) {
   }, [show]);
 
   if (!show || !visible) return null;
-
-  const yearText = predictedYear ? `around ${predictedYear}` : "soon";
 
   async function handleCheckout() {
     if (!reportId) {
@@ -96,10 +93,10 @@ export default function UnlockBanner({ show, reportId, predictedYear }: Props) {
             className="font-serif font-light"
             style={{ fontSize: "clamp(1rem, 2.5vw, 1.3rem)", color: "var(--cream)", lineHeight: 1.2, marginBottom: "0.2rem" }}
           >
-            Your next turning point is coming.
+            Your pattern reveals what you can&apos;t see yet.
           </p>
           <p className="font-sans text-xs" style={{ color: "var(--muted)" }}>
-            Predicted {yearText} — unlock to see the full forecast
+            Unlock the full analysis — and what it means for today
           </p>
         </div>
 

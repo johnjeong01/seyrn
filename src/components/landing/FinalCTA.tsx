@@ -67,12 +67,13 @@ export default function FinalCTA() {
             className="font-serif font-light text-[var(--cream)] -mt-6"
             style={{ fontSize: "clamp(1.3rem,3vw,2rem)", lineHeight: 1.4 }}
           >
-            Life repeats itself.
+            The pattern has been running your life —
             <br />
-            Those who know their pattern{" "}
-            <em className="italic">design</em> their future.
+            silently, consistently — for years.
             <br />
-            Those who don&apos;t, repeat their past.
+            When you see it clearly, you stop reacting.
+            <br />
+            You start <em className="italic">choosing.</em>
           </p>
         </div>
 
@@ -86,9 +87,9 @@ export default function FinalCTA() {
             transition: "opacity 0.9s ease-out 0.15s, transform 0.9s ease-out 0.15s",
           }}
         >
-          Your next turning point
+          Clarity about your past
           <br />
-          is already forming.
+          changes everything about today.
         </h2>
 
         <p
@@ -99,7 +100,7 @@ export default function FinalCTA() {
             transition: "opacity 0.9s ease-out 0.28s, transform 0.9s ease-out 0.28s",
           }}
         >
-          The question is whether you&apos;ll see it coming.
+          That shift is available right now.
         </p>
 
         {/* CTA button */}

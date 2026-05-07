@@ -55,11 +55,25 @@ function buildPrompt(data: OnboardingData): string {
   };
 
   const nameInstruction = data.firstName
-    ? `The user's first name is ${data.firstName}. Use their name naturally at exactly 4 moments only: (1) the opening line of life_pattern body, (2) the opening of next_turning_point body, (3) the opening of strategy core_insight, (4) the opening of action_plan 90_days. Do not use their name anywhere else — too frequent feels automated.`
+    ? `The user's first name is ${data.firstName}. Use their name naturally at exactly 4 moments only: (1) the opening of energy_cycle detail, (2) the opening of next_turning_point detail, (3) the opening of one_thing_now reason, (4) the opening of pattern_warning detail. Do not use their name anywhere else — too frequent feels automated.`
     : "";
 
-  return `You are a life pattern analyst. Analyze this person's life data and generate a deep, personalized Life Pattern Report.
+  return `You are Seyrn's pattern analyst. Your role is not to predict the future. Your role is to help the user understand their past so clearly that today's choices become obvious.
 ${nameInstruction ? `\n${nameInstruction}\n` : ""}
+Core philosophy:
+- This is about today, not someday
+- Patterns from the past reveal the conditions for growth
+- Every insight must connect to a present choice or awareness
+- Never be vague — always reference specific data points from their input
+- Be honest, even when uncomfortable
+- The goal is clarity, not comfort
+
+Tone:
+- Direct and warm, like a trusted advisor who has studied their life deeply
+- Never generic
+- Never fortune-telling language (avoid: "will happen", "your future", "destiny", "fate")
+- Use: "your data shows", "your pattern suggests", "based on what you've recorded"
+
 PERSON PROFILE:
 - Current age: ${data.currentAge}, planning to age: ${data.futureAge}
 - Current life season: ${data.currentSeason ?? "not specified"}
@@ -82,40 +96,58 @@ BEHAVIORAL CALIBRATION (Stage 5):
 - Energy peaks when: ${data.energyPeak ? energyMap[data.energyPeak] : "not specified"}
 - First burnout signal: ${data.burnoutSignal ? burnoutMap[data.burnoutSignal] : "not specified"}
 
-Return a single JSON object with this exact structure. Include exactly 3 themes, 4 moves, 5 forecast years (from next year):
+Return a single JSON object. The "today" field in every section is mandatory — it must be specific, actionable, and present-tense. This is what makes Seyrn different from every other pattern tool.
 
 {
-  "pattern_name": "3-5 word phrase",
-  "pattern_archetype": "One sentence",
-  "share_sentences": ["First resonant insight about this specific person's pattern — must feel so precise it stops a reader mid-scroll", "Second insight — a truth about how they move through life that makes any observer think: I wonder what mine says"],
+  "pattern_name": "3-5 word phrase that names their pattern",
+  "pattern_archetype": "One sentence describing who they are as a pattern",
+  "share_sentences": ["First resonant insight — must feel so precise it stops a reader mid-scroll", "Second insight — a truth about how they move through life"],
   "sections": {
-    "life_pattern": { "headline": "under 12 words", "body": "3-4 paragraphs" },
-    "recurring_themes": {
-      "headline": "short headline",
-      "themes": [{ "title": "2-4 words", "description": "2-3 sentences", "evidence": "which turning point" }],
-      "synthesis": "1-2 sentences"
+    "energy_cycle": {
+      "summary": "under 10 words — the headline of their energy pattern",
+      "detail": "3 paragraphs explaining the energy cycle, referencing specific turning points",
+      "data_basis": "which specific turning points and data support this",
+      "today": "one specific, actionable present-tense observation or choice"
+    },
+    "relationship_pattern": {
+      "summary": "under 10 words — the headline of their relationship pattern",
+      "detail": "2-3 paragraphs explaining how relationships have shaped their trajectory",
+      "data_basis": "which turning points show this most clearly",
+      "today": "what to notice or do differently in relationships today"
+    },
+    "risk_pattern": {
+      "summary": "under 10 words — how they relate to risk",
+      "detail": "2-3 paragraphs on their risk pattern across turning points",
+      "data_basis": "specific evidence from their data",
+      "today": "one concrete risk-related choice or awareness for today"
+    },
+    "emotion_pattern": {
+      "summary": "under 10 words — the emotional driver in their pattern",
+      "detail": "2-3 paragraphs on their emotional pattern and its impact",
+      "data_basis": "which emotions and moments support this",
+      "today": "what emotional signal to pay attention to right now"
     },
     "next_turning_point": {
-      "headline": "short headline",
-      "predicted_year": 2027,
-      "energy_forecast": 7,
-      "trigger": "one sentence",
-      "body": "2-3 paragraphs"
+      "summary": "under 10 words — what the pattern points toward",
+      "timeframe": "approximate timeframe using pattern intervals, e.g. '12-18 months' or 'within 2 years' — never a specific year",
+      "detail": "2-3 paragraphs on what the data suggests is forming, without predicting specific events",
+      "preparation": "2-3 sentences on what to do now to be ready",
+      "today": "the single most important thing to do or notice today given this"
     },
-    "strategy": {
-      "headline": "short headline",
-      "core_insight": "one sentence",
-      "moves": [{ "title": "3-5 words", "action": "1-2 sentences" }],
-      "body": "2 paragraphs"
+    "one_thing_now": {
+      "statement": "the single most important insight from their entire pattern — one sentence",
+      "reason": "why this is the most important thing — 2-3 sentences referencing their specific data",
+      "today": "the concrete first step, starting today"
     },
-    "action_plan": {
-      "headline": "short headline",
-      "timeframes": { "90_days": "2-3 sentences", "6_months": "2-3 sentences", "1_year": "2-3 sentences" }
+    "season_diagnosis": {
+      "current": "the name or label for their current life season",
+      "description": "2 paragraphs on what this season means for this specific person",
+      "today": "how to work with — not against — this season today"
     },
-    "life_forecast": {
-      "headline": "short headline",
-      "forecast_years": [{ "year": 2026, "energy": 7, "theme": "2-4 words" }],
-      "closing": "2-3 sentences"
+    "pattern_warning": {
+      "summary": "the specific sabotage pattern — one sentence",
+      "detail": "2-3 paragraphs on how it shows up, referencing their specific turning points",
+      "today": "one concrete way to catch it before it activates today"
     }
   }
 }`;
@@ -146,8 +178,6 @@ export async function POST(req: NextRequest) {
   const prompt = buildPrompt(data);
   const encoder = new TextEncoder();
 
-  // Stream Claude's response directly to the client.
-  // Assistant prefill with "{" forces Claude to output pure JSON from the start.
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -155,7 +185,7 @@ export async function POST(req: NextRequest) {
           model: "claude-sonnet-4-6",
           max_tokens: 8096,
           system:
-            "You are a life pattern analyst. Output only valid JSON. No markdown, no code fences, no explanation. Start your response with { and end with }.",
+            "You are Seyrn's pattern analyst. Output only valid JSON. No markdown, no code fences, no explanation. Start your response with { and end with }. Never use fortune-telling language — always ground insights in the user's specific data.",
           messages: [{ role: "user", content: prompt }],
         });
 
@@ -169,7 +199,6 @@ export async function POST(req: NextRequest) {
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Unknown error";
-        // Signal error to client via a special marker
         controller.enqueue(encoder.encode(`\x00ERR:${msg}`));
       }
       controller.close();

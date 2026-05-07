@@ -22,7 +22,7 @@ const steps = [
   {
     number: "02",
     title: "See your pattern",
-    body: "AI reveals the cycles, rhythms, and blind spots in your life data. Not generic insights — specific observations drawn from your turning points.",
+    body: "AI reveals what's been driving your choices — the cycles, the blind spots, the conditions where you thrive.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
@@ -43,8 +43,8 @@ const steps = [
   },
   {
     number: "03",
-    title: "Design what's next",
-    body: "Know your next turning point before it arrives. Prepare instead of react. Every pattern has a next move — Seyrn shows you yours.",
+    title: "Choose better today",
+    body: "Every day you understand yourself more clearly, your choices become more precise. Not reaction. Intention.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
