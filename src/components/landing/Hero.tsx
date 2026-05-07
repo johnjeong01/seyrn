@@ -90,22 +90,22 @@ export default function Hero() {
       />
 
       {/* Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+      <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
         {/* Eyebrow */}
         <p
-          className="font-sans text-xs tracking-[0.35em] uppercase text-[var(--gold)] mb-8 animate-fade-in"
+          className="font-sans text-xs tracking-[0.35em] uppercase text-[var(--gold)] mb-8"
           style={{ opacity: 0, animation: "fadeIn 0.8s ease-out 0.2s forwards" }}
         >
           Life Pattern Analysis
         </p>
 
-        {/* Headline */}
+        {/* Headline — 3 clean lines, readable size */}
         <h1
-          className="font-serif font-light text-[var(--cream)] mb-6"
+          className="font-serif font-light text-[var(--cream)] mb-8"
           style={{
-            fontSize: "clamp(2.8rem, 6.5vw, 5.5rem)",
-            lineHeight: 1.08,
-            letterSpacing: "-0.02em",
+            fontSize: "clamp(2rem, 3.8vw, 3.2rem)",
+            lineHeight: 1.25,
+            letterSpacing: "-0.01em",
             opacity: 0,
             animation: "fadeUp 1s ease-out 0.35s forwards",
           }}
@@ -114,9 +114,7 @@ export default function Hero() {
           <br />
           But you can understand it.
           <br />
-          And that changes everything
-          <br />
-          about{" "}
+          And that changes everything about{" "}
           <em
             className="not-italic"
             style={{
@@ -132,16 +130,16 @@ export default function Hero() {
 
         {/* Subheadline */}
         <p
-          className="font-sans font-light text-[var(--warm)] max-w-2xl mx-auto mb-12"
+          className="font-sans font-light text-[var(--warm)] mx-auto mb-12"
           style={{
-            fontSize: "clamp(1rem, 2vw, 1.25rem)",
-            lineHeight: 1.75,
+            fontSize: "clamp(0.95rem, 1.6vw, 1.1rem)",
+            lineHeight: 1.8,
             opacity: 0,
             animation: "fadeUp 0.9s ease-out 0.55s forwards",
           }}
         >
           Seyrn analyzes the patterns in your past to help you make better choices today.
-          <br className="hidden sm:block" />
+          <br />
           Not fortune-telling. Pattern recognition.
         </p>
 
