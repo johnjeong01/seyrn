@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { ReportData, PatternSection } from "@/lib/report-types";
+import type { ReportData, PatternSection, ClosingStatement } from "@/lib/report-types";
 import type { TurningPoint } from "@/lib/onboarding-types";
 import ShareCard from "./ShareCard";
 
@@ -12,6 +12,7 @@ interface Props {
   turningPoints: TurningPoint[];
   currentSeason?: string | null;
   firstName?: string | null;
+  shareMode?: boolean;
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -356,6 +357,111 @@ function WaitlistSection({ firstName: nameProp }: { firstName?: string | null })
   );
 }
 
+function ClosingStatementBlock({ cs }: { cs: ClosingStatement }) {
+  return (
+    <div
+      style={{
+        background: "#1f1d19",
+        marginTop: "4rem",
+        marginLeft: "calc(-50vw + 50%)",
+        marginRight: "calc(-50vw + 50%)",
+        padding: "5rem 1.5rem",
+      }}
+    >
+      <div style={{ maxWidth: "600px", margin: "0 auto", textAlign: "center" }}>
+        <div
+          style={{
+            width: "40px",
+            height: "1px",
+            background: "rgba(201,168,76,0.35)",
+            margin: "0 auto 3rem",
+          }}
+        />
+        <h2
+          className="font-serif font-light mb-8"
+          style={{
+            fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
+            color: "var(--cream)",
+            lineHeight: 1.2,
+          }}
+        >
+          {cs.headline}
+        </h2>
+        <p
+          className="font-sans font-light text-sm leading-relaxed mb-10"
+          style={{ color: "var(--muted)", maxWidth: "560px", margin: "0 auto 2.5rem" }}
+        >
+          {cs.body}
+        </p>
+        <p
+          className="font-serif font-light"
+          style={{
+            fontSize: "clamp(1.1rem, 2.5vw, 1.4rem)",
+            color: "var(--gold)",
+            fontStyle: "italic",
+            lineHeight: 1.45,
+          }}
+        >
+          {cs.final_line}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SharePatternButton() {
+  const [loading, setLoading] = useState(false);
+
+  async function handleShare() {
+    let url = window.location.href;
+    let reportId: string | null = null;
+    try { reportId = localStorage.getItem("seyrn-report-id"); } catch { /* ignore */ }
+
+    if (reportId) {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/reports/share-link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reportId }),
+        });
+        if (res.ok) {
+          const body = await res.json() as { shareToken?: string };
+          if (body.shareToken) url = `${window.location.origin}/s/${body.shareToken}`;
+        }
+      } catch { /* fallback to current URL */ } finally {
+        setLoading(false);
+      }
+    }
+
+    if (navigator.share) {
+      navigator.share({ title: "My Life Pattern — Seyrn", url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).catch(() => {});
+    }
+  }
+
+  return (
+    <div style={{ textAlign: "center", marginTop: "3rem" }}>
+      <button
+        onClick={handleShare}
+        disabled={loading}
+        className="font-sans text-xs tracking-widest uppercase transition-all duration-300"
+        style={{
+          background: "transparent",
+          color: loading ? "var(--muted)" : "var(--gold)",
+          border: "1px solid rgba(201,168,76,0.4)",
+          padding: "0.85rem 2rem",
+          cursor: loading ? "wait" : "pointer",
+          letterSpacing: "0.12em",
+        }}
+      >
+        {loading ? "Getting link…" : "Share Your Pattern →"}
+      </button>
+    </div>
+  );
+}
+
 // Scroll-triggered visibility for sections
 function useVisible() {
   const [visible, setVisible] = useState(false);
@@ -389,7 +495,7 @@ function AnimatedSection({ children, delay = 0 }: { children: React.ReactNode; d
   );
 }
 
-export default function ReportSections({ report, isPaid, plan, turningPoints, currentSeason, firstName }: Props) {
+export default function ReportSections({ report, isPaid, plan, turningPoints, currentSeason, firstName, shareMode }: Props) {
   const { sections } = report;
 
   return (
@@ -421,7 +527,7 @@ export default function ReportSections({ report, isPaid, plan, turningPoints, cu
             {report.pattern_archetype}
           </p>
 
-          <ShareCard report={report} turningPoints={turningPoints} currentSeason={currentSeason} firstName={firstName} />
+          {!shareMode && <ShareCard report={report} turningPoints={turningPoints} currentSeason={currentSeason} firstName={firstName} />}
         </div>
       </AnimatedSection>
 
@@ -641,8 +747,21 @@ export default function ReportSections({ report, isPaid, plan, turningPoints, cu
         </div>
       </AnimatedSection>
 
-      {/* Waitlist CTA — one-time paid users only */}
-      {isPaid && plan === "one-time" && <WaitlistSection firstName={firstName} />}
+      {/* Closing statement + share — paid users only, hidden in share mode */}
+      {isPaid && !shareMode && sections.closing_statement && (
+        <>
+          <ClosingStatementBlock cs={sections.closing_statement} />
+          <SharePatternButton />
+        </>
+      )}
+
+      {/* Closing statement — share mode shows it without share button */}
+      {shareMode && sections.closing_statement && (
+        <ClosingStatementBlock cs={sections.closing_statement} />
+      )}
+
+      {/* Waitlist CTA — one-time paid users only, hidden in share mode */}
+      {isPaid && !shareMode && plan === "one-time" && <WaitlistSection firstName={firstName} />}
     </div>
   );
 }

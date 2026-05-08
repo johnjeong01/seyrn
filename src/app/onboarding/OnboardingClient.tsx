@@ -385,14 +385,19 @@ export default function OnboardingClient() {
       ? `${firstName}, which season best describes where your life is today?`
       : meta.question;
 
-  const personalizedContext =
-    currentStep.id === "email-collect"
-      ? "Where should we send your report?"
-      : currentStep.id === "repeated-mistake" && firstName
-      ? `These three questions reveal the invisible threads running through your story, ${firstName}.`
-      : currentStep.id === "change-response" && firstName
-      ? `Last three questions, ${firstName}. These calibrate the timing of your predictions.`
-      : meta.context;
+  const isTPSubStep = currentStep.id.startsWith("tp-") && currentStep.id !== "tp-add-more";
+
+  const personalizedContext = isTPSubStep
+    ? currentStep.id === "tp-category" && tpIndex === 0
+      ? "Turning Point 1 — Oldest first, toward the present"
+      : `Turning Point ${tpIndex + 1}`
+    : currentStep.id === "email-collect"
+    ? "Where should we send your report?"
+    : currentStep.id === "repeated-mistake" && firstName
+    ? `These three questions reveal the invisible threads running through your story, ${firstName}.`
+    : currentStep.id === "change-response" && firstName
+    ? `Last three questions, ${firstName}. These calibrate the timing of your predictions.`
+    : meta.context;
 
   return (
     <QuestionWrapper

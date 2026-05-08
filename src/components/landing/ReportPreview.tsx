@@ -141,58 +141,97 @@ export default function ReportPreview() {
         </div>
 
         {/* Section 01 */}
-        <Section number="01" title="You peak every 22 months — and you&apos;re almost there." delay={0.1} visible={visible}>
+        <Section number="01" title="Your best decisions happened when you felt worst." delay={0.1} visible={visible}>
           <Body>
-            Your energy peaks approximately every 22 months. The clearest peaks appeared at ages 28 and 35 — both preceded by a 6-month contraction phase where you pulled back, reassessed, and rebuilt momentum quietly.
+            3 of Alex&apos;s 5 turning points were initiated at an energy level of 5 or below — not during the high-energy peaks most people assume drive change. The career pivot at 24, the business failure at 34, and the independent venture at 36 all began in contraction, not momentum.
             <br /><br />
-            You are currently in a contraction phase. Based on your cycle, you are approximately 4 months from your next natural high. This is not stagnation — it is loading.
+            The move abroad at 27 and the relationship shift at 31 appear unrelated in the data. They are connected by one detail that doesn&apos;t appear inside either event: both occurred within 14 months of a previous energy peak. The high-energy phases don&apos;t produce change — they create the pressure that makes change inevitable when they end.
             <br /><br />
-            The mistake most people make at this point in the cycle is forcing acceleration. Your data says the opposite: protect your energy now, and the peak arrives on schedule.
+            The paradox this creates: Alex has spent years waiting for the right conditions to act — stability, clarity, high energy. Every high-stakes decision in the data was made precisely when those conditions were absent. Alex doesn&apos;t launch from comfort. Alex launches from accumulated tension.
           </Body>
+          <div
+            style={{
+              borderLeft: "3px solid var(--gold)",
+              background: "rgba(201,168,76,0.04)",
+              padding: "0.875rem 1.125rem",
+              marginTop: "1.25rem",
+            }}
+          >
+            <p className="font-sans uppercase mb-1.5" style={{ fontSize: "0.6rem", letterSpacing: "0.2em", color: "var(--gold)" }}>Today</p>
+            <p className="font-sans text-sm leading-relaxed" style={{ color: "var(--cream)", fontStyle: "italic" }}>
+              Write down the decision you&apos;ve been calling &ldquo;not quite ready.&rdquo; Set a 14-day deadline in your calendar for making it — not for it to be ready, but for you to decide.
+            </p>
+          </div>
         </Section>
 
         {/* Section 02 */}
-        <Section number="02" title="You grow through people — but only the right kind." delay={0.2} visible={visible}>
+        <Section number="02" title="You believe you grow alone. Your data disagrees." delay={0.2} visible={visible}>
           <Body>
-            Every major breakthrough in your data involved a mentor or senior figure who believed in you before the evidence was there. Without exception, your lowest-energy periods correlate with working in isolation or with peers at the same level as you.
+            4 of Alex&apos;s 5 positive-outcome turning points share a single structural feature: another person played a specific catalyzing role. The lone exception — the business failure at 34 — is also the only period where Alex had deliberately pulled back from seeking outside input. The correlation is not ambiguous.
             <br /><br />
-            The pattern is structural, not coincidental. You are not someone who grows alone — you are someone who grows fastest when pulled forward by someone who has already been where you&apos;re going.
+            The career pivot at 24 and the independent venture at 36 appear unrelated — different industries, different stages of life. They share one overlooked data point: both coincide with the presence of someone who believed in the outcome before the evidence existed. These two points, 12 years apart, are driven by the same structural condition.
             <br /><br />
-            The question your data raises: who in your current life fills that role? If the answer is no one, that is the most actionable gap in your pattern right now.
+            The blind spot this creates is significant. Alex&apos;s self-narrative is built around independence. But the periods of highest output — the ones Alex identifies as peaks — are all structurally dependent on a single relationship type. Alex optimizes for going alone precisely when going with someone would accelerate everything.
           </Body>
+          <div
+            style={{
+              borderLeft: "3px solid var(--gold)",
+              background: "rgba(201,168,76,0.04)",
+              padding: "0.875rem 1.125rem",
+              marginTop: "1.25rem",
+            }}
+          >
+            <p className="font-sans uppercase mb-1.5" style={{ fontSize: "0.6rem", letterSpacing: "0.2em", color: "var(--gold)" }}>Today</p>
+            <p className="font-sans text-sm leading-relaxed" style={{ color: "var(--cream)", fontStyle: "italic" }}>
+              Name the one person currently 5–10 years ahead of you on the path you&apos;re on. If you can&apos;t name anyone, write down exactly how you would find them. Do this before you open anything else today.
+            </p>
+          </div>
         </Section>
 
         {/* Section 03 */}
         <Section number="03" title="Three forces that have quietly run your life." delay={0.3} visible={visible}>
           <div className="flex flex-col gap-4">
             <ThemeCard
-              title="The Leap Before The Net"
-              body="Every major move in your data was made before the conditions were ideal. You have never waited for permission or certainty. This is courage — but it has also meant that your financial foundation resets with each leap instead of compounding."
+              title="The Pre-Launch Tension"
+              body="Every major move in Alex's data was made before the conditions were ideal. But in 4 of 5 cases, there were 6–12 months of quiet preparation before the visible leap. The leap isn't impulsive — it's just the visible part of a longer, invisible build that Alex rarely credits."
             />
             <ThemeCard
-              title="The Isolation Trap"
-              body="When things get hard, you go quiet. You stop reaching out, stop asking for help, and try to solve it alone. Your data shows this extends low-energy periods by an average of 4–6 months longer than necessary."
+              title="The Isolation Loop"
+              body="When pressure increases, Alex's first response is to stop reaching out. Every low-energy period in the data that began with deliberate isolation lasted an average of 5 months longer than it needed to. The loop is self-sealing: isolation creates the conditions that make isolation feel like the only option."
             />
             <ThemeCard
-              title="The Builder&apos;s Identity"
-              body="Underneath every turning point is the same drive: to build something that belongs entirely to you. Not a job. Not a role. Something you made. This has been true since age 24 and it has not changed."
+              title="The Builder&apos;s Constant"
+              body="Underneath every turning point — career pivot, move, relationship shift, failure, independent venture — the same drive is operating: to build ownership. Not a position. Not security. Something that belongs to Alex entirely. This has been true since age 24 and hasn't weakened once across 13 years."
             />
           </div>
         </Section>
 
         {/* Section 04 */}
-        <Section number="04" title="The Controlled Burn" delay={0.4} visible={visible}>
+        <Section number="04" title="Fear and forward motion are the same signal in Alex&apos;s system." delay={0.4} visible={visible}>
           <Body>
-            Your dominant emotional pattern is not what most people would expect. You do not panic under pressure — you compress. Fear and excitement arrive together in your data, every single time, without exception.
+            In every turning point Alex recorded — all 5, without exception — fear and forward movement appear simultaneously, not sequentially. The data does not show a pattern where fear resolved before action was taken. The action was always taken with the fear still present.
             <br /><br />
-            This pairing is your signature. It means you cannot use the absence of fear as a signal that you&apos;re ready. You will always feel fear at the moment of the right decision. You always have.
+            The paradox this creates is structural. Alex has developed a working assumption: feel confident first, then act. But that sequence has never once appeared in the data. Every major move was made in a state of significant emotional ambiguity. The confidence came after. It has always come after.
             <br /><br />
-            The risk in your pattern is not impulsiveness — it is the opposite. When the fear gets loud enough, you sometimes wait too long, and the window closes.
+            The blind spot: Alex&apos;s 2 lowest-energy years both coincide with periods reported as emotionally calm. The periods rated highest for meaning and growth carry the highest emotional intensity. Calm is not rest in Alex&apos;s pattern. Calm is disengagement.
           </Body>
+          <div
+            style={{
+              borderLeft: "3px solid var(--gold)",
+              background: "rgba(201,168,76,0.04)",
+              padding: "0.875rem 1.125rem",
+              marginTop: "1.25rem",
+            }}
+          >
+            <p className="font-sans uppercase mb-1.5" style={{ fontSize: "0.6rem", letterSpacing: "0.2em", color: "var(--gold)" }}>Today</p>
+            <p className="font-sans text-sm leading-relaxed" style={{ color: "var(--cream)", fontStyle: "italic" }}>
+              Find the thing you most want to do that you&apos;re waiting to feel confident about first. Write one sentence describing what it looks like when it&apos;s done. Send that sentence to one person today.
+            </p>
+          </div>
         </Section>
 
         {/* Section 05 */}
-        <Section number="05" title="Your next turning point arrives around 2026." delay={0.5} visible={visible}>
+        <Section number="05" title="The next window opens in 2026 — and it&apos;s already forming." delay={0.5} visible={visible}>
           <div
             className="flex items-center gap-4 mb-6 py-4 px-5"
             style={{
@@ -201,26 +240,21 @@ export default function ReportPreview() {
             }}
           >
             <div>
-              <p className="font-sans text-xs text-[var(--muted)] tracking-widest uppercase mb-1">Predicted Year</p>
+              <p className="font-sans text-xs text-[var(--muted)] tracking-widest uppercase mb-1">Pattern-Based Timeframe</p>
               <p className="font-serif text-[var(--gold)]" style={{ fontSize: "2.5rem", lineHeight: 1 }}>2026</p>
             </div>
             <div className="w-px h-12 bg-[rgba(201,168,76,0.2)]" />
             <div>
-              <p className="font-sans text-xs text-[var(--muted)] tracking-widest uppercase mb-2">Energy Forecast</p>
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 rounded-full bg-[rgba(255,255,255,0.08)]" style={{ width: "100px" }}>
-                  <div className="h-full rounded-full bg-[var(--gold)]" style={{ width: "80%" }} />
-                </div>
-                <span className="font-sans text-xs text-[var(--muted)]">8/10</span>
-              </div>
+              <p className="font-sans text-xs text-[var(--muted)] tracking-widest uppercase mb-2">Based on</p>
+              <p className="font-sans text-sm" style={{ color: "var(--cream)" }}>24-month cycle · 5 turning points</p>
             </div>
           </div>
           <Body>
-            Every previous turning point in your life was externally triggered — a move, a failure, an opportunity. Your next one will be different.
+            Based on the average interval across all 5 turning points, Alex&apos;s cycle produces a major pivot roughly every 24 months. The last significant turning point — the independent venture — was initiated at 36. The pattern interval places the next window at 38, which lands in 2026.
             <br /><br />
-            It will be the moment you stop trading time for money entirely and begin earning from something you built. Based on your cycle, this window opens in 2026 — but only if the groundwork is laid in the 18 months before it.
+            What distinguishes this pivot from the previous four: every prior turning point was externally triggered — a relationship ended, a company failed, a geography changed. The independent venture at 36 was the first self-initiated move. The 2026 window is the first one where Alex has the data to prepare before it arrives — not react to it after.
             <br /><br />
-            The years 2024 and 2025 are preparation years, not pivot years. What you build quietly now determines what becomes visible then.
+            The 18 months before each of Alex&apos;s turning points consistently feature a quiet-build phase only visible in retrospect. What gets built in that window is what becomes visible after the pivot. That quiet build is happening right now.
           </Body>
         </Section>
 
@@ -234,24 +268,24 @@ export default function ReportPreview() {
               lineHeight: 1.7,
             }}
           >
-            &ldquo;Your greatest asset is not your talent or your courage — both of which you have in abundance. It is the 18 months ahead of you, if you use them differently than you&apos;ve used every 18 months before.&rdquo;
+            &ldquo;Every previous turning point arrived as something that happened to Alex. The next one is the first that could arrive as something Alex built toward.&rdquo;
           </blockquote>
           <div className="flex flex-col gap-5">
             <Move
               number="01"
-              text="Define the one thing you are building — in writing, one paragraph. Vague intentions stay vague. A written definition becomes a target your subconscious begins solving for."
+              text="Write one sentence defining what you are building — specifically, what you will own when it's done. Not 'a business' or 'a career.' The specific thing. Do it before you close this tab."
             />
             <Move
               number="02"
-              text="Identify your next mentor figure. Not a peer. Someone 5–10 years ahead on the path you&apos;re on. Your data is unambiguous: you do not grow at full speed without this person in your orbit."
+              text="Name the one person currently 5–10 years ahead of you on the exact path you're on. Block 30 minutes this week to reach out to them — not to ask for anything, but to introduce yourself and say what you're building."
             />
             <Move
               number="03"
-              text="Protect 90 minutes per week of uninterrupted deep focus on your independent income concept. Non-negotiable. Treat it like a meeting you cannot cancel."
+              text="Open your bank account today. Calculate how many months you could operate at current spending if income stopped tomorrow. Write that number down. It determines the timing of your next leap."
             />
             <Move
               number="04"
-              text="Stop the financial reset cycle. Before the next leap, build 3 months of operating reserve. Every leap you&apos;ve made was right. The timing was right. The foundation underneath was not."
+              text="Block 90 minutes this week — not this month — for uninterrupted work on your independent asset. Put it in your calendar now, before you close this tab. Name it something that makes it non-negotiable."
             />
           </div>
         </Section>

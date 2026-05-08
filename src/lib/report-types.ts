@@ -31,6 +31,12 @@ export interface PatternWarning {
   today: string;
 }
 
+export interface ClosingStatement {
+  headline: string;
+  body: string;
+  final_line: string;
+}
+
 export interface ReportSections {
   energy_cycle: PatternSection;
   relationship_pattern: PatternSection;
@@ -40,6 +46,7 @@ export interface ReportSections {
   one_thing_now: OneThingNow;
   season_diagnosis: SeasonDiagnosis;
   pattern_warning: PatternWarning;
+  closing_statement?: ClosingStatement;
 }
 
 export interface ReportData {

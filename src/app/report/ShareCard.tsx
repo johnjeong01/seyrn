@@ -381,25 +381,48 @@ async function buildCard(
 
 export default function ShareCard({ report, turningPoints, currentSeason, firstName }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cachedUrlRef = useRef<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "loading" | "copied">("idle");
+  const [displayUrl, setDisplayUrl] = useState<string | null>(null);
 
-  const shareData = buildShareData(report, turningPoints, currentSeason ?? null, firstName);
-  const shareUrl = typeof window !== "undefined" ? buildShareUrl(shareData) : "";
+  const resolveShareUrl = useCallback(async (): Promise<string> => {
+    if (cachedUrlRef.current) return cachedUrlRef.current;
+    const origin = window.location.origin;
+    let reportId: string | null = null;
+    try { reportId = localStorage.getItem("seyrn-report-id"); } catch { /* ignore */ }
+    if (reportId) {
+      try {
+        const res = await fetch("/api/reports/share-link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reportId }),
+        });
+        if (res.ok) {
+          const body = await res.json() as { shareToken?: string };
+          if (body.shareToken) {
+            const url = `${origin}/s/${body.shareToken}`;
+            cachedUrlRef.current = url;
+            setDisplayUrl(url);
+            return url;
+          }
+        }
+      } catch { /* fallback */ }
+    }
+    // Fallback to encoded URL
+    const url = buildShareUrl(buildShareData(report, turningPoints, currentSeason ?? null, firstName));
+    cachedUrlRef.current = url;
+    return url;
+  }, [report, turningPoints, currentSeason, firstName]);
 
   const handleOpen = useCallback(async () => {
     if (!canvasRef.current) return;
     setGenerating(true);
     try {
-      const url = await buildCard(
-        canvasRef.current,
-        report,
-        turningPoints,
-        currentSeason ?? null
-      );
+      const url = await buildCard(canvasRef.current, report, turningPoints, currentSeason ?? null);
       setImageUrl(url);
       setModalOpen(true);
     } finally {
@@ -416,22 +439,29 @@ export default function ShareCard({ report, turningPoints, currentSeason, firstN
   }, [imageUrl]);
 
   const handleCopyLink = useCallback(async () => {
-    const url = buildShareUrl(buildShareData(report, turningPoints, currentSeason ?? null, firstName));
+    setCopyState("loading");
     try {
+      const url = await resolveShareUrl();
       await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2200);
+      setCopyState("copied");
+      setTimeout(() => setCopyState("idle"), 2200);
     } catch {
-      // Fallback: select text
+      setCopyState("idle");
     }
-  }, [report, turningPoints, currentSeason]);
+  }, [resolveShareUrl]);
 
-  const handleShareX = useCallback(() => {
+  const handleShareX = useCallback(async () => {
+    const url = await resolveShareUrl();
     const text = `My life pattern: "${report.pattern_name}" — ${report.pattern_archetype.slice(0, 80)}\n\nFind yours:`;
-    const url = buildShareUrl(buildShareData(report, turningPoints, currentSeason ?? null, firstName));
-    const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-    window.open(xUrl, "_blank", "noopener,noreferrer");
-  }, [report, turningPoints, currentSeason]);
+    window.open(
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }, [resolveShareUrl, report]);
+
+  const isCopied = copyState === "copied";
+  const isCopyLoading = copyState === "loading";
 
   const btnBase: React.CSSProperties = {
     fontFamily: "inherit",
@@ -476,7 +506,7 @@ export default function ShareCard({ report, turningPoints, currentSeason, firstN
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
       {/* Copied toast */}
-      {copied && (
+      {isCopied && (
         <div
           style={{
             position: "fixed",
@@ -523,7 +553,6 @@ export default function ShareCard({ report, turningPoints, currentSeason, firstN
               animation: "fadeUp 0.3s ease-out forwards",
             }}
           >
-            {/* Card preview */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
@@ -531,7 +560,6 @@ export default function ShareCard({ report, turningPoints, currentSeason, firstN
               style={{ width: "100%", display: "block", borderRadius: 1 }}
             />
 
-            {/* Actions */}
             <div
               style={{
                 display: "flex",
@@ -545,19 +573,9 @@ export default function ShareCard({ report, turningPoints, currentSeason, firstN
               <button
                 onClick={handleDownload}
                 className="font-sans"
-                style={{
-                  ...btnBase,
-                  background: "var(--gold)",
-                  color: "var(--ink)",
-                  border: "none",
-                  fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--gold-light)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "var(--gold)";
-                }}
+                style={{ ...btnBase, background: "var(--gold)", color: "var(--ink)", border: "none", fontWeight: 500 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gold-light)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gold)"; }}
               >
                 Download PNG
               </button>
@@ -565,41 +583,30 @@ export default function ShareCard({ report, turningPoints, currentSeason, firstN
               {/* Copy Link */}
               <button
                 onClick={handleCopyLink}
+                disabled={isCopyLoading}
                 className="font-sans"
                 style={{
                   ...btnBase,
                   background: "transparent",
-                  color: copied ? "var(--gold)" : "var(--cream)",
-                  border: `1px solid ${copied ? "var(--gold)" : "rgba(245,240,232,0.35)"}`,
+                  color: isCopied ? "var(--gold)" : isCopyLoading ? "var(--muted)" : "var(--cream)",
+                  border: `1px solid ${isCopied ? "var(--gold)" : "rgba(245,240,232,0.35)"}`,
+                  cursor: isCopyLoading ? "wait" : "pointer",
                 }}
                 onMouseEnter={(e) => {
-                  if (!copied) e.currentTarget.style.background = "rgba(245,240,232,0.07)";
+                  if (!isCopied && !isCopyLoading) e.currentTarget.style.background = "rgba(245,240,232,0.07)";
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
-                {copied ? "Copied!" : "Copy Link"}
+                {isCopied ? "Copied!" : isCopyLoading ? "Getting link…" : "Copy Link"}
               </button>
 
               {/* Share to X */}
               <button
                 onClick={handleShareX}
                 className="font-sans"
-                style={{
-                  ...btnBase,
-                  background: "transparent",
-                  color: "var(--muted)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "var(--cream)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "var(--muted)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                }}
+                style={{ ...btnBase, background: "transparent", color: "var(--muted)", border: "1px solid rgba(255,255,255,0.1)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--cream)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
               >
                 Share to X
               </button>
@@ -608,32 +615,23 @@ export default function ShareCard({ report, turningPoints, currentSeason, firstN
               <button
                 onClick={() => setModalOpen(false)}
                 className="font-sans"
-                style={{
-                  ...btnBase,
-                  background: "transparent",
-                  color: "var(--muted)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "var(--cream)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "var(--muted)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                }}
+                style={{ ...btnBase, background: "transparent", color: "var(--muted)", border: "1px solid rgba(255,255,255,0.1)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--cream)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
               >
                 Close
               </button>
             </div>
 
-            {/* Shared link preview */}
-            <p
-              className="font-sans text-center mt-4"
-              style={{ color: "var(--muted)", fontSize: "0.6rem", letterSpacing: "0.05em" }}
-            >
-              {shareUrl.slice(0, 72)}{shareUrl.length > 72 ? "…" : ""}
-            </p>
+            {/* Link preview */}
+            {displayUrl && (
+              <p
+                className="font-sans text-center mt-4"
+                style={{ color: "var(--muted)", fontSize: "0.6rem", letterSpacing: "0.05em" }}
+              >
+                {displayUrl}
+              </p>
+            )}
           </div>
         </div>
       )}
