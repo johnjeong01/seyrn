@@ -126,31 +126,41 @@ export default function ReportClient() {
   }, [router]);
 
   // ── Verify LemonSqueezy payment from redirect URL ───────────────
+  // Poll the DB instead of trusting ?paid=true from the URL directly.
+  // Lemon Squeezy webhook may lag a few seconds after the redirect fires.
   useEffect(() => {
     const paramReportId = searchParams.get("reportId");
     const paid          = searchParams.get("paid");
     if (!paramReportId || paid !== "true" || isPaid) return;
 
-    // Trust the redirect URL immediately — LS only sends users here after successful payment.
-    // The redirectUrl is constructed server-side; paid=true cannot be injected.
-    localStorage.setItem(PAID_KEY,      "true");
-    localStorage.setItem(PLAN_KEY,      "one-time");
-    localStorage.setItem(REPORT_ID_KEY, paramReportId);
-    setReportId(paramReportId);
-    setPlan("one-time");
-    setIsPaid(true);
-    router.replace("/report");
+    let cancelled = false;
 
-    // Fire-and-forget: confirm with DB (webhook may lag by a few seconds)
-    fetch(`/api/verify-payment?reportId=${paramReportId}`)
-      .then((r) => r.json() as Promise<{ paid?: boolean; plan?: string }>)
-      .then((body) => {
-        if (body.plan === "monthly") {
-          localStorage.setItem(PLAN_KEY, "monthly");
-          setPlan("monthly");
-        }
-      })
-      .catch(() => { /* no-op */ });
+    const verify = async () => {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (cancelled) return;
+        if (attempt > 0) await new Promise<void>((r) => setTimeout(r, 3000));
+        try {
+          const res  = await fetch(`/api/verify-payment?reportId=${paramReportId}`);
+          const body = (await res.json()) as { paid?: boolean; plan?: string };
+          if (body.paid) {
+            const confirmedPlan = body.plan === "monthly" ? "monthly" : "one-time";
+            localStorage.setItem(PAID_KEY,      "true");
+            localStorage.setItem(PLAN_KEY,      confirmedPlan);
+            localStorage.setItem(REPORT_ID_KEY, paramReportId);
+            setReportId(paramReportId);
+            setPlan(confirmedPlan);
+            setIsPaid(true);
+            router.replace("/report");
+            return;
+          }
+        } catch { /* retry */ }
+      }
+      // Payment not confirmed after ~15 s — redirect without unlocking
+      if (!cancelled) router.replace("/report");
+    };
+
+    verify();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 

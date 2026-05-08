@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const CHARS = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
 
-function genToken(len = 8): string {
+function genToken(len = 12): string {
   const bytes = crypto.getRandomValues(new Uint8Array(len));
   return Array.from(bytes, (b) => CHARS[b % CHARS.length]).join("");
 }
