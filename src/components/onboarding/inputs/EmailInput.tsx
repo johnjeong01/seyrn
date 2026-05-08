@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 interface Props {
@@ -12,7 +13,8 @@ const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 export default function EmailInput({ value: initialValue, onComplete }: Props) {
   const [email, setEmail] = useState(initialValue);
   const [error, setError] = useState("");
-  const canContinue = isValidEmail(email);
+  const [agreed, setAgreed] = useState(false);
+  const canContinue = isValidEmail(email) && agreed;
 
   const handleSubmit = () => {
     if (!canContinue) {
@@ -55,6 +57,65 @@ export default function EmailInput({ value: initialValue, onComplete }: Props) {
           </p>
         )}
       </div>
+
+      {/* Consent checkbox */}
+      <label
+        className="flex items-start gap-3 mb-8 cursor-pointer"
+        style={{ userSelect: "none" }}
+      >
+        <div
+          className="relative shrink-0 mt-0.5"
+          style={{ width: "16px", height: "16px" }}
+        >
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+            style={{ zIndex: 1 }}
+          />
+          <div
+            style={{
+              width: "16px",
+              height: "16px",
+              border: agreed ? "1px solid var(--gold)" : "1px solid rgba(255,255,255,0.2)",
+              background: agreed ? "var(--gold)" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.2s ease",
+            }}
+          >
+            {agreed && (
+              <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                <path d="M1 3.5L3.5 6L8 1" stroke="var(--ink)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+        </div>
+        <span className="font-sans text-xs leading-[1.7]" style={{ color: "var(--muted)" }}>
+          I agree to the{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-[var(--cream)] transition-colors"
+            style={{ color: "var(--warm)" }}
+          >
+            Privacy Policy
+          </Link>
+          {" "}and{" "}
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-[var(--cream)] transition-colors"
+            style={{ color: "var(--warm)" }}
+          >
+            Terms of Service
+          </Link>
+        </span>
+      </label>
 
       <button
         onClick={handleSubmit}
