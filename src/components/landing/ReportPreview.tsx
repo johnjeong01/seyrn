@@ -130,16 +130,33 @@ function TeasedSection({
         </h4>
       </div>
       {special}
-      <div style={{ position: "relative" }}>
-        <p className="font-sans text-sm text-[var(--warm)] leading-[1.85]">{firstLine}</p>
-        <div style={{ height: "3.5rem" }} />
+      <div style={{ position: "relative", overflow: "hidden" }}>
+        <p className="font-sans text-sm text-[var(--warm)] leading-[1.85] mb-3">{firstLine}</p>
+        <div
+          style={{
+            filter: "blur(4px)",
+            opacity: 0.35,
+            userSelect: "none",
+            pointerEvents: "none",
+          }}
+          aria-hidden="true"
+        >
+          <p className="font-sans text-sm text-[var(--warm)] leading-[1.85] mb-3">
+            This pattern has repeated in Alex&apos;s data across every major transition — visible only
+            when the full sequence of turning points is mapped together in a single view.
+          </p>
+          <p className="font-sans text-sm text-[var(--warm)] leading-[1.85]">
+            What makes it significant is not its presence but its timing. It activates 6–12 months
+            before every visible leap — silently, without Alex noticing it was happening.
+          </p>
+        </div>
         <div
           style={{
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
-            height: "4.5rem",
+            height: "5rem",
             background: "linear-gradient(to bottom, transparent, var(--ink))",
             pointerEvents: "none",
           }}
