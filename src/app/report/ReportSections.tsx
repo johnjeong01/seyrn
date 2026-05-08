@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { ReportData, PatternSection, ClosingStatement } from "@/lib/report-types";
 import type { TurningPoint } from "@/lib/onboarding-types";
 import ShareCard from "./ShareCard";
+import DailyInsightSample from "@/components/report/DailyInsightSample";
 
 interface Props {
   report: ReportData;
@@ -252,9 +253,10 @@ function WaitlistSection({ firstName: nameProp }: { firstName?: string | null })
     <div
       style={{
         background: "#1f1d19",
-        marginTop: "4rem",
+        marginTop: "0",
         marginLeft: "calc(-50vw + 50%)",
         marginRight: "calc(-50vw + 50%)",
+        borderTop: "1px solid rgba(255,255,255,0.05)",
         padding: "5rem 1.5rem",
       }}
     >
@@ -263,45 +265,41 @@ function WaitlistSection({ firstName: nameProp }: { firstName?: string | null })
           className="font-sans text-xs tracking-[0.25em] uppercase mb-5"
           style={{ color: "var(--gold)" }}
         >
-          Your Pattern Sharpens Every Day
+          What Comes Next
         </p>
         <h2
-          className="font-serif font-light mb-6"
-          style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)", color: "var(--cream)", lineHeight: 1.15 }}
+          className="font-serif font-light mb-8"
+          style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)", color: "var(--cream)", lineHeight: 1.2 }}
         >
-          This report is based on
-          <br />your turning points so far.
+          This report showed you who you have been. Daily Seyrn shows you who you are becoming — today.
         </h2>
 
         <p
           className="font-sans font-light text-sm leading-relaxed mb-4"
           style={{ color: "var(--warm)" }}
         >
-          Imagine what becomes visible when you add daily data.
+          Every morning, you receive one insight. Not a dashboard. Not a summary. One thing — specific to your energy pattern, your decision history, your current season.
         </p>
         <p
           className="font-sans font-light text-sm leading-relaxed mb-4"
           style={{ color: "var(--warm)" }}
         >
-          Monthly subscribers get a daily email — one insight, every morning,
-          built from your growing pattern data.
+          The longer you track, the sharper it gets. By Day 90, it knows when you make your best decisions, what precedes your lowest points, and what&apos;s likely to shift next.
         </p>
         <p
           className="font-sans font-light text-sm leading-relaxed mb-10"
           style={{ color: "var(--warm)" }}
         >
-          The longer you record, the more precise your choices become.
-          The people on the waitlist get first access and a permanent launch discount.
+          Monthly Seyrn is coming. You can join the waitlist now — first access, launch discount, no obligation.
         </p>
 
         {done ? (
           <div style={{ borderLeft: "2px solid var(--gold)", paddingLeft: "1.25rem" }}>
             <p className="font-serif font-light text-lg mb-2" style={{ color: "var(--cream)" }}>
-              {firstName ? `You’re on the list, ${firstName}.` : "You’re on the list."}
+              {firstName ? `${firstName}, you’re on the list.` : "You’re on the list."}
             </p>
             <p className="font-sans text-sm" style={{ color: "var(--muted)" }}>
-              We&apos;ll reach you at <span style={{ color: "var(--cream)" }}>{email}</span> when
-              monthly launches.
+              When monthly launches, you&apos;ll be first to know.
             </p>
           </div>
         ) : (
@@ -333,21 +331,24 @@ function WaitlistSection({ firstName: nameProp }: { firstName?: string | null })
             <button
               type="submit"
               disabled={loading || !email.includes("@")}
-              className="font-sans text-xs tracking-widest uppercase transition-all"
+              className="font-sans text-xs tracking-widest uppercase transition-all w-full"
               style={{
                 background: loading || !email.includes("@") ? "rgba(201,168,76,0.4)" : "var(--gold)",
                 color: "var(--ink)",
                 border: "none",
-                padding: "0.85rem 2rem",
+                padding: "1rem 2rem",
                 cursor: loading || !email.includes("@") ? "not-allowed" : "pointer",
                 fontWeight: 500,
                 letterSpacing: "0.12em",
+                display: "block",
+                width: "100%",
+                textAlign: "center",
               }}
             >
               {loading
                 ? "Joining…"
                 : prefilled
-                ? `Join with ${email} →`
+                ? `Join the Waitlist — ${email}`
                 : "Join the Waitlist →"}
             </button>
           </form>
@@ -357,7 +358,7 @@ function WaitlistSection({ firstName: nameProp }: { firstName?: string | null })
   );
 }
 
-function ClosingStatementBlock({ cs }: { cs: ClosingStatement }) {
+function ClosingStatementBlock({ cs, showShareButton }: { cs: ClosingStatement; showShareButton?: boolean }) {
   return (
     <div
       style={{
@@ -365,34 +366,35 @@ function ClosingStatementBlock({ cs }: { cs: ClosingStatement }) {
         marginTop: "4rem",
         marginLeft: "calc(-50vw + 50%)",
         marginRight: "calc(-50vw + 50%)",
+        borderTop: "1px solid rgba(201,168,76,0.18)",
         padding: "5rem 1.5rem",
       }}
     >
       <div style={{ maxWidth: "600px", margin: "0 auto", textAlign: "center" }}>
-        <div
-          style={{
-            width: "40px",
-            height: "1px",
-            background: "rgba(201,168,76,0.35)",
-            margin: "0 auto 3rem",
-          }}
-        />
         <h2
           className="font-serif font-light mb-8"
           style={{
             fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
             color: "var(--cream)",
             lineHeight: 1.2,
+            maxWidth: "700px",
+            marginLeft: "auto",
+            marginRight: "auto",
           }}
         >
           {cs.headline}
         </h2>
-        <p
-          className="font-sans font-light text-sm leading-relaxed mb-10"
-          style={{ color: "var(--muted)", maxWidth: "560px", margin: "0 auto 2.5rem" }}
-        >
-          {cs.body}
-        </p>
+        <div style={{ maxWidth: "560px", margin: "0 auto 2.5rem" }}>
+          {cs.body.split("\n\n").map((para, i) => (
+            <p
+              key={i}
+              className="font-sans font-light text-sm leading-relaxed mb-4"
+              style={{ color: "var(--muted)" }}
+            >
+              {para}
+            </p>
+          ))}
+        </div>
         <p
           className="font-serif font-light"
           style={{
@@ -400,10 +402,12 @@ function ClosingStatementBlock({ cs }: { cs: ClosingStatement }) {
             color: "var(--gold)",
             fontStyle: "italic",
             lineHeight: 1.45,
+            marginTop: "2rem",
           }}
         >
           {cs.final_line}
         </p>
+        {showShareButton && <SharePatternButton />}
       </div>
     </div>
   );
@@ -449,8 +453,8 @@ function SharePatternButton() {
         className="font-sans text-xs tracking-widest uppercase transition-all duration-300"
         style={{
           background: "transparent",
-          color: loading ? "var(--muted)" : "var(--gold)",
-          border: "1px solid rgba(201,168,76,0.4)",
+          color: loading ? "var(--muted)" : "var(--cream)",
+          border: `1px solid ${loading ? "rgba(245,240,232,0.2)" : "rgba(245,240,232,0.4)"}`,
           padding: "0.85rem 2rem",
           cursor: loading ? "wait" : "pointer",
           letterSpacing: "0.12em",
@@ -666,7 +670,9 @@ export default function ReportSections({ report, isPaid, plan, turningPoints, cu
                 {sections.one_thing_now.statement}
               </p>
             </div>
-            <BodyText>{sections.one_thing_now.reason}</BodyText>
+            {sections.one_thing_now.reason.split("\n\n").map((para, i) => (
+              <BodyText key={i}>{para}</BodyText>
+            ))}
             <TodayBlock content={sections.one_thing_now.today} />
           </BlurGate>
         </div>
@@ -747,17 +753,31 @@ export default function ReportSections({ report, isPaid, plan, turningPoints, cu
         </div>
       </AnimatedSection>
 
-      {/* Closing statement + share — paid users only, hidden in share mode */}
+      {/* Closing statement + share button inside — paid users only, hidden in share mode */}
       {isPaid && !shareMode && sections.closing_statement && (
-        <>
-          <ClosingStatementBlock cs={sections.closing_statement} />
-          <SharePatternButton />
-        </>
+        <ClosingStatementBlock cs={sections.closing_statement} showShareButton />
       )}
 
       {/* Closing statement — share mode shows it without share button */}
       {shareMode && sections.closing_statement && (
         <ClosingStatementBlock cs={sections.closing_statement} />
+      )}
+
+      {/* Daily insight sample — paid non-share users */}
+      {isPaid && !shareMode && (
+        <div
+          style={{
+            marginLeft: "calc(-50vw + 50%)",
+            marginRight: "calc(-50vw + 50%)",
+            background: "var(--ink)",
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            padding: "5rem 1.5rem",
+          }}
+        >
+          <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+            <DailyInsightSample name={firstName} />
+          </div>
+        </div>
       )}
 
       {/* Waitlist CTA — one-time paid users only, hidden in share mode */}
