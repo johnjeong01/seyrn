@@ -96,6 +96,7 @@ function TeasedSection({
   number,
   title,
   firstLine,
+  blurredLines,
   special,
   delay = 0,
   visible,
@@ -103,6 +104,7 @@ function TeasedSection({
   number: string;
   title: string;
   firstLine: React.ReactNode;
+  blurredLines: [string, string];
   special?: React.ReactNode;
   delay?: number;
   visible: boolean;
@@ -136,15 +138,8 @@ function TeasedSection({
           style={{ filter: "blur(4px)", opacity: 0.35, userSelect: "none", pointerEvents: "none" }}
           aria-hidden="true"
         >
-          <p className="font-sans text-sm text-[var(--warm)] leading-[1.85] mb-3">
-            The pattern beneath this surface has repeated three times across Alex&apos;s data.
-            It appears first at age 24, reappears at 31, and reaches its clearest form at 36.
-          </p>
-          <p className="font-sans text-sm text-[var(--warm)] leading-[1.85]">
-            What makes it significant is not the pattern itself — it is when it activates.
-            Every instance coincides with a specific structural condition that Alex has never
-            consciously named.
-          </p>
+          <p className="font-sans text-sm text-[var(--warm)] leading-[1.85] mb-3">{blurredLines[0]}</p>
+          <p className="font-sans text-sm text-[var(--warm)] leading-[1.85]">{blurredLines[1]}</p>
         </div>
         <div
           style={{
@@ -265,6 +260,10 @@ export default function ReportPreview() {
           number="03"
           title="Three forces that have quietly run your life."
           firstLine="The first one explains why Alex works hard and still feels behind —"
+          blurredLines={[
+            "The second one is why he always ends up doing it alone — even when he explicitly tries to bring people in. It has appeared in every collaborative phase of his data without exception.",
+            "The third has nothing to do with effort. It has everything to do with timing. And Alex keeps getting the timing wrong by exactly the same margin every time.",
+          ]}
           delay={0.3}
           visible={visible}
         />
@@ -274,6 +273,10 @@ export default function ReportPreview() {
           number="04"
           title="Fear and forward motion are the same signal in Alex's system."
           firstLine="Alex's strongest moments share one emotional fingerprint: fear paired with a clear direction —"
+          blurredLines={[
+            "The data shows this in 5 of 5 turning points. Not 3 of 5. Not most. Every single one. There are no exceptions in Alex's record.",
+            "What this means right now: the discomfort Alex is currently feeling is not a reason to wait. In his pattern, it is the only condition under which he has ever moved.",
+          ]}
           delay={0.4}
           visible={visible}
         />
@@ -283,6 +286,10 @@ export default function ReportPreview() {
           number="05"
           title="The next window opens in 2026 — and it's already forming."
           firstLine="The trigger is already in motion."
+          blurredLines={[
+            "Alex's 24-month interval has held consistent across every recorded pivot. The variance is less than 90 days in each case. This is not coincidence — it is a behavioral rhythm.",
+            "What is forming right now will not be visible to Alex for another 6–8 months. But the data shows it is already underway. The question is not if. It is whether he will be positioned when it arrives.",
+          ]}
           delay={0.5}
           visible={visible}
           special={
@@ -300,6 +307,10 @@ export default function ReportPreview() {
           number="06"
           title="Stop reacting. Start positioning."
           firstLine="Alex's greatest untapped asset is not geography or credentials —"
+          blurredLines={[
+            "Every time Alex has reacted to circumstances rather than moved toward something — in 2010, in 2017, and again in 2019 — the outcome required 18 additional months of recovery. The pattern is not subtle.",
+            "There are 4 specific moves his pattern points toward for the next 6 months. Not general advice. Moves specific to Alex's data, his cycle timing, and the pattern that is currently active.",
+          ]}
           delay={0.6}
           visible={visible}
         />
