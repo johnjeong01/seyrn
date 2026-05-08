@@ -18,9 +18,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Seyrn — Decode Your Life Patterns",
+  title: "Seyrn — Understand Your Life's Pattern",
   description:
-    "AI-powered life transition analysis. Discover your personal patterns, predict your next pivot, and get a career strategy built around your unique rhythm.",
+    "Understand your life's patterns and make better choices today. AI-powered analysis built from your actual turning points. Not fortune-telling. Pattern recognition.",
   keywords: [
     "life patterns",
     "career transitions",
@@ -30,17 +30,17 @@ export const metadata: Metadata = {
     "pattern recognition",
   ],
   openGraph: {
-    title: "Seyrn — Decode Your Life Patterns",
+    title: "Seyrn — Understand Your Life's Pattern",
     description:
-      "AI reveals the hidden patterns in your life transitions — and shows you what comes next.",
+      "Understand your life's patterns and make better choices today. AI-powered analysis built from your actual turning points. Not fortune-telling. Pattern recognition.",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Seyrn — Decode Your Life Patterns",
+    title: "Seyrn — Understand Your Life's Pattern",
     description:
-      "AI reveals the hidden patterns in your life transitions — and shows you what comes next.",
+      "Understand your life's patterns and make better choices today. AI-powered analysis built from your actual turning points. Not fortune-telling. Pattern recognition.",
   },
 };
 

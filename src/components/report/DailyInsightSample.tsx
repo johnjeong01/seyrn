@@ -81,7 +81,7 @@ export default function DailyInsightSample({ name }: Props) {
             This is not a warning — it is a signal your data has shown before.
           </p>
           <p className="font-sans font-light text-sm leading-relaxed" style={{ color: "var(--warm)", marginBottom: "0.75rem" }}>
-            In 2016 and 2020, this exact pattern preceded your two biggest life moves. Both times,
+            In 2010 and 2020, this exact pattern preceded your two biggest life moves. Both times,
             you acted before you felt ready. Both times, it was the right call.
           </p>
           <p className="font-sans font-light text-sm leading-relaxed" style={{ color: "var(--warm)" }}>

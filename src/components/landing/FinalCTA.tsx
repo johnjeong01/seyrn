@@ -132,7 +132,7 @@ export default function FinalCTA() {
             transition: "opacity 0.9s ease-out 0.6s",
           }}
         >
-          Free to start · 15 minutes · No account required
+          Free to start · 10 minutes · No account required
         </p>
       </div>
 
@@ -143,7 +143,7 @@ export default function FinalCTA() {
             Seyrn
           </span>
           <p className="font-sans text-xs text-[var(--muted)]/40">
-            © 2025 Seyrn · All rights reserved
+            © 2026 Seyrn · All rights reserved
           </p>
           <div className="flex items-center gap-5">
             <Link href="/privacy" className="font-sans text-xs text-[var(--muted)]/40 hover:text-[var(--muted)] transition-colors">

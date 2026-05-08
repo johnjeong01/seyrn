@@ -184,7 +184,7 @@ export default function Hero() {
             animation: "fadeIn 0.8s ease-out 1.1s forwards",
           }}
         >
-          Free to start · No account required · 15 minutes
+          Free to start · No account required · 10 minutes
         </p>
       </div>
 

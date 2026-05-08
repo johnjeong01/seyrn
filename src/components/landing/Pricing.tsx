@@ -179,7 +179,7 @@ export default function Pricing() {
                   <Check />
                   <span className="flex items-center gap-2 flex-wrap">
                     {f}
-                    {i === 3 && (
+                    {(i === 3 || i === 4 || i === 5) && (
                       <span className="font-sans text-[9px] tracking-widest uppercase px-1.5 py-0.5 bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
                         Coming Soon
                       </span>

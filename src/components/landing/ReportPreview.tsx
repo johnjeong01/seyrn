@@ -95,11 +95,15 @@ function Today({ children }: { children: React.ReactNode }) {
 function TeasedSection({
   number,
   title,
+  firstLine,
+  special,
   delay = 0,
   visible,
 }: {
   number: string;
   title: string;
+  firstLine: React.ReactNode;
+  special?: React.ReactNode;
   delay?: number;
   visible: boolean;
 }) {
@@ -125,23 +129,21 @@ function TeasedSection({
           {title}
         </h4>
       </div>
+      {special}
       <div style={{ position: "relative", overflow: "hidden" }}>
+        <p className="font-sans text-sm text-[var(--warm)] leading-[1.85] mb-3">{firstLine}</p>
         <div
-          style={{
-            filter: "blur(4px)",
-            opacity: 0.35,
-            userSelect: "none",
-            pointerEvents: "none",
-          }}
+          style={{ filter: "blur(4px)", opacity: 0.35, userSelect: "none", pointerEvents: "none" }}
           aria-hidden="true"
         >
           <p className="font-sans text-sm text-[var(--warm)] leading-[1.85] mb-3">
-            This pattern has repeated in Alex&apos;s data across every major transition — visible only
-            when the full sequence of turning points is mapped together in a single view.
+            The pattern beneath this surface has repeated three times across Alex&apos;s data.
+            It appears first at age 24, reappears at 31, and reaches its clearest form at 36.
           </p>
           <p className="font-sans text-sm text-[var(--warm)] leading-[1.85]">
-            What makes it significant is not its presence but its timing. It activates 6–12 months
-            before every visible leap — silently, without Alex noticing it was happening.
+            What makes it significant is not the pattern itself — it is when it activates.
+            Every instance coincides with a specific structural condition that Alex has never
+            consciously named.
           </p>
         </div>
         <div
@@ -262,6 +264,7 @@ export default function ReportPreview() {
         <TeasedSection
           number="03"
           title="Three forces that have quietly run your life."
+          firstLine="The first one explains why Alex works hard and still feels behind —"
           delay={0.3}
           visible={visible}
         />
@@ -270,6 +273,7 @@ export default function ReportPreview() {
         <TeasedSection
           number="04"
           title="Fear and forward motion are the same signal in Alex's system."
+          firstLine="Alex's strongest moments share one emotional fingerprint: fear paired with a clear direction —"
           delay={0.4}
           visible={visible}
         />
@@ -278,14 +282,24 @@ export default function ReportPreview() {
         <TeasedSection
           number="05"
           title="The next window opens in 2026 — and it's already forming."
+          firstLine="The trigger is already in motion."
           delay={0.5}
           visible={visible}
+          special={
+            <p
+              className="font-serif text-[var(--gold)] mb-4"
+              style={{ fontSize: "clamp(1.5rem, 3vw, 1.9rem)", lineHeight: 1.1 }}
+            >
+              Your next turning point: 2026
+            </p>
+          }
         />
 
         {/* Section 06 — Strategic Moves (teased) */}
         <TeasedSection
           number="06"
           title="Stop reacting. Start positioning."
+          firstLine="Alex's greatest untapped asset is not geography or credentials —"
           delay={0.6}
           visible={visible}
         />

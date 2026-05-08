@@ -33,6 +33,18 @@ export default function Nav() {
         {/* Right actions */}
         <div className="flex items-center gap-6">
           <Link
+            href="#how-it-works"
+            className="hidden md:block text-sm text-[var(--muted)] hover:text-[var(--cream)] transition-colors duration-300 font-sans font-light tracking-wide"
+          >
+            How it Works
+          </Link>
+          <Link
+            href="#report"
+            className="hidden md:block text-sm text-[var(--muted)] hover:text-[var(--cream)] transition-colors duration-300 font-sans font-light tracking-wide"
+          >
+            Sample
+          </Link>
+          <Link
             href="#pricing"
             className="hidden sm:block text-sm text-[var(--muted)] hover:text-[var(--cream)] transition-colors duration-300 font-sans font-light tracking-wide"
           >
@@ -40,9 +52,9 @@ export default function Nav() {
           </Link>
           <Link
             href="/onboarding"
-            className="text-sm font-sans font-medium px-5 py-2.5 border border-[var(--gold)]/40 text-[var(--gold)] hover:bg-[var(--gold)] hover:text-[var(--ink)] transition-all duration-400 tracking-wide"
+            className="text-sm font-sans font-medium px-5 py-2.5 bg-[var(--gold)] text-[var(--ink)] hover:bg-[var(--gold-light)] transition-all duration-400 tracking-wide"
           >
-            Start Free
+            Start Free →
           </Link>
         </div>
       </div>
