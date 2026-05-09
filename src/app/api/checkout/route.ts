@@ -1,7 +1,13 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { lemonSqueezySetup, createCheckout } from "@lemonsqueezy/lemonsqueezy.js";
 
 export const dynamic = "force-dynamic";
+
+function signReportId(reportId: string): string {
+  const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET ?? "";
+  return crypto.createHmac("sha256", secret).update(reportId).digest("hex").slice(0, 40);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,6 +24,7 @@ export async function POST(req: NextRequest) {
     lemonSqueezySetup({ apiKey: process.env.LEMONSQUEEZY_API_KEY! });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://seyrn.app";
+    const sig = signReportId(reportId);
 
     const response = await createCheckout(
       process.env.LEMONSQUEEZY_STORE_ID!,
@@ -39,7 +46,7 @@ export async function POST(req: NextRequest) {
         productOptions: {
           name: "Seyrn Full Report",
           description: "Your complete life pattern analysis",
-          redirectUrl: `${appUrl}/report?reportId=${reportId}&paid=true`,
+          redirectUrl: `${appUrl}/report?reportId=${reportId}&paid=true&sig=${sig}`,
           receiptButtonText: "View Your Report",
           receiptThankYouNote: firstName
             ? `${firstName}, your pattern analysis is ready.`

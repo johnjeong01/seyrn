@@ -178,13 +178,19 @@ export default function ReportClient() {
       router.replace("/report");
     };
 
+    const sig       = searchParams.get("sig");
+    const sigParam  = sig ? `&sig=${encodeURIComponent(sig)}` : "";
+
     const verify = async () => {
-      // 10 attempts × 4 s gap = up to ~36 s (covers slow LS webhooks)
+      // Attempt 0 sends the HMAC sig → server confirms instantly without waiting
+      // for the webhook. Attempts 1-9 fall back to DB polling (webhook may arrive
+      // within seconds after the redirect).
       for (let attempt = 0; attempt < 10; attempt++) {
         if (cancelled) return;
         if (attempt > 0) await new Promise<void>((r) => setTimeout(r, 4000));
+        const qs = attempt === 0 ? sigParam : "";
         try {
-          const res  = await fetch(`/api/verify-payment?reportId=${paramReportId}`);
+          const res  = await fetch(`/api/verify-payment?reportId=${paramReportId}${qs}`);
           const body = (await res.json()) as { paid?: boolean; plan?: string };
           if (body.paid) { confirm(body.plan ?? "one-time"); return; }
         } catch { /* retry */ }
