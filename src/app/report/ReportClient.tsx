@@ -9,12 +9,13 @@ import LifeGraph from "./LifeGraph";
 import ReportSections from "./ReportSections";
 import UnlockBanner from "./UnlockBanner";
 
-const REPORT_CACHE_KEY = "seyrn-report-data-v2";
-const ONBOARDING_KEY   = "seyrn-onboarding-data";
-const PAID_KEY         = "seyrn-paid";
-const PLAN_KEY         = "seyrn-plan";
-const REPORT_ID_KEY    = "seyrn-report-id";
-const MAGIC_SENT_KEY   = "seyrn-magic-sent";
+const REPORT_CACHE_KEY   = "seyrn-report-data-v2";
+const ONBOARDING_KEY     = "seyrn-onboarding-data";
+const PAID_KEY           = "seyrn-paid";
+const PLAN_KEY           = "seyrn-plan";
+const REPORT_ID_KEY      = "seyrn-report-id";
+const MAGIC_SENT_KEY     = "seyrn-magic-sent";
+const PENDING_VERIFY_KEY = "seyrn-pending-verify"; // reportId awaiting webhook confirmation
 
 const LOADING_MESSAGES = [
   "Reading your turning points…",
@@ -101,9 +102,10 @@ export default function ReportClient() {
   const [error,   setError]   = useState<string | null>(null);
 
   // Payment state
-  const [isPaid,    setIsPaid]    = useState(false);
-  const [plan,      setPlan]      = useState<"one-time" | "monthly" | null>(null);
-  const [reportId,  setReportId]  = useState<string | null>(null);
+  const [isPaid,     setIsPaid]     = useState(false);
+  const [plan,       setPlan]       = useState<"one-time" | "monthly" | null>(null);
+  const [reportId,   setReportId]   = useState<string | null>(null);
+  const [verifying,  setVerifying]  = useState(false);
 
   // ── Load onboarding data + restore payment state ────────────────
   useEffect(() => {
@@ -125,42 +127,77 @@ export default function ReportClient() {
     if (savedId) setReportId(savedId);
   }, [router]);
 
+  // ── On mount: retry pending verification (webhook may have fired since last visit) ──
+  useEffect(() => {
+    if (isPaid) return;
+    const pendingId = localStorage.getItem(PENDING_VERIFY_KEY);
+    if (!pendingId) return;
+
+    fetch(`/api/verify-payment?reportId=${pendingId}`)
+      .then((r) => r.json() as Promise<{ paid?: boolean; plan?: string }>)
+      .then((body) => {
+        if (body.paid) {
+          const p = body.plan === "monthly" ? "monthly" : "one-time";
+          localStorage.setItem(PAID_KEY,      "true");
+          localStorage.setItem(PLAN_KEY,      p);
+          localStorage.setItem(REPORT_ID_KEY, pendingId);
+          localStorage.removeItem(PENDING_VERIFY_KEY);
+          setReportId(pendingId);
+          setPlan(p);
+          setIsPaid(true);
+        }
+      })
+      .catch(() => { /* silent — try again on next load */ });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── Verify LemonSqueezy payment from redirect URL ───────────────
-  // Poll the DB instead of trusting ?paid=true from the URL directly.
-  // Lemon Squeezy webhook may lag a few seconds after the redirect fires.
+  // Poll DB instead of trusting ?paid=true from the URL directly.
+  // LS webhook typically fires within 5–30 s after the redirect.
   useEffect(() => {
     const paramReportId = searchParams.get("reportId");
     const paid          = searchParams.get("paid");
     if (!paramReportId || paid !== "true" || isPaid) return;
 
+    // Save pending ID immediately so page refresh can retry if we time out
+    localStorage.setItem(PENDING_VERIFY_KEY, paramReportId);
+    setVerifying(true);
+
     let cancelled = false;
 
+    const confirm = (confirmedPlan: string) => {
+      const p = confirmedPlan === "monthly" ? "monthly" : "one-time";
+      localStorage.setItem(PAID_KEY,      "true");
+      localStorage.setItem(PLAN_KEY,      p);
+      localStorage.setItem(REPORT_ID_KEY, paramReportId);
+      localStorage.removeItem(PENDING_VERIFY_KEY);
+      setReportId(paramReportId);
+      setPlan(p);
+      setIsPaid(true);
+      setVerifying(false);
+      router.replace("/report");
+    };
+
     const verify = async () => {
-      for (let attempt = 0; attempt < 5; attempt++) {
+      // 10 attempts × 4 s gap = up to ~36 s (covers slow LS webhooks)
+      for (let attempt = 0; attempt < 10; attempt++) {
         if (cancelled) return;
-        if (attempt > 0) await new Promise<void>((r) => setTimeout(r, 3000));
+        if (attempt > 0) await new Promise<void>((r) => setTimeout(r, 4000));
         try {
           const res  = await fetch(`/api/verify-payment?reportId=${paramReportId}`);
           const body = (await res.json()) as { paid?: boolean; plan?: string };
-          if (body.paid) {
-            const confirmedPlan = body.plan === "monthly" ? "monthly" : "one-time";
-            localStorage.setItem(PAID_KEY,      "true");
-            localStorage.setItem(PLAN_KEY,      confirmedPlan);
-            localStorage.setItem(REPORT_ID_KEY, paramReportId);
-            setReportId(paramReportId);
-            setPlan(confirmedPlan);
-            setIsPaid(true);
-            router.replace("/report");
-            return;
-          }
+          if (body.paid) { confirm(body.plan ?? "one-time"); return; }
         } catch { /* retry */ }
       }
-      // Payment not confirmed after ~15 s — redirect without unlocking
-      if (!cancelled) router.replace("/report");
+      // Timed out — PENDING_VERIFY_KEY stays so refresh can retry
+      if (!cancelled) {
+        setVerifying(false);
+        router.replace("/report");
+      }
     };
 
     verify();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; setVerifying(false); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -297,6 +334,28 @@ export default function ReportClient() {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-16 pb-32">
+      {/* Payment verification banner */}
+      {verifying && (
+        <div
+          className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-3 py-3"
+          style={{ background: "rgba(201,168,76,0.12)", borderBottom: "1px solid rgba(201,168,76,0.25)" }}
+        >
+          <div
+            style={{
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
+              border: "1.5px solid rgba(201,168,76,0.3)",
+              borderTopColor: "var(--gold)",
+              animation: "spin 1s linear infinite",
+            }}
+          />
+          <p className="font-sans text-xs tracking-[0.18em] uppercase" style={{ color: "var(--gold)" }}>
+            Confirming your payment…
+          </p>
+        </div>
+      )}
+
       {/* Header row */}
       <div className="flex items-center justify-between mb-16">
         <Link
