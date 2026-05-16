@@ -197,7 +197,7 @@ export default function TermsPage() {
             items={[
               "Refunds are available within 7 days of purchase if you have not yet viewed your generated report",
               "Once your report has been generated and delivered to your email, the purchase is final",
-              "To request a refund, email support@seyrn.app with your purchase email and order number",
+              "To request a refund, email hello@seyrn.app with your purchase email and order number",
               "Monthly subscription cancellations take effect at the end of the current billing period — no partial refunds",
             ]}
           />
@@ -346,10 +346,10 @@ export default function TermsPage() {
               Seyrn
               <br />
               <a
-                href="mailto:support@seyrn.app"
+                href="mailto:hello@seyrn.app"
                 style={{ color: "var(--gold)", textDecoration: "underline" }}
               >
-                support@seyrn.app
+                hello@seyrn.app
               </a>
             </p>
           </div>
@@ -357,21 +357,16 @@ export default function TermsPage() {
 
         {/* Footer nav */}
         <div
-          className="mt-16 pt-8 flex items-center justify-between"
+          className="mt-16 pt-8 flex items-center justify-between flex-wrap gap-4"
           style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
         >
-          <Link
-            href="/privacy"
-            className="font-sans text-xs"
-            style={{ color: "var(--muted)" }}
-          >
+          <Link href="/privacy" className="font-sans text-xs" style={{ color: "var(--muted)" }}>
             ← Privacy Policy
           </Link>
-          <Link
-            href="/"
-            className="font-sans text-xs"
-            style={{ color: "var(--muted)" }}
-          >
+          <Link href="/refund" className="font-sans text-xs" style={{ color: "var(--muted)" }}>
+            Refund Policy →
+          </Link>
+          <Link href="/" className="font-sans text-xs" style={{ color: "var(--muted)" }}>
             Back to Seyrn →
           </Link>
         </div>

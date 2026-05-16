@@ -152,6 +152,9 @@ export default function FinalCTA() {
             <Link href="/terms" className="font-sans text-xs text-[var(--muted)]/40 hover:text-[var(--muted)] transition-colors">
               Terms
             </Link>
+            <Link href="/refund" className="font-sans text-xs text-[var(--muted)]/40 hover:text-[var(--muted)] transition-colors">
+              Refunds
+            </Link>
           </div>
         </div>
       </div>

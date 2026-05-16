@@ -112,10 +112,10 @@ export default function PrivacyPage() {
             provides an AI-powered life pattern analysis service. For questions about this policy,
             contact us at{" "}
             <a
-              href="mailto:privacy@seyrn.app"
+              href="mailto:hello@seyrn.app"
               style={{ color: "var(--gold)", textDecoration: "underline" }}
             >
-              privacy@seyrn.app
+              hello@seyrn.app
             </a>
             .
           </P>
@@ -267,10 +267,10 @@ export default function PrivacyPage() {
           <P>
             To exercise any of these rights, email{" "}
             <a
-              href="mailto:privacy@seyrn.app"
+              href="mailto:hello@seyrn.app"
               style={{ color: "var(--gold)", textDecoration: "underline" }}
             >
-              privacy@seyrn.app
+              hello@seyrn.app
             </a>{" "}
             with the subject line &quot;Data Request&quot; and the email address associated with
             your report. We will respond within 30 days.
@@ -299,10 +299,10 @@ export default function PrivacyPage() {
             collect personal data from children. If you believe a minor has submitted data
             through our service, please contact us immediately at{" "}
             <a
-              href="mailto:privacy@seyrn.app"
+              href="mailto:hello@seyrn.app"
               style={{ color: "var(--gold)", textDecoration: "underline" }}
             >
-              privacy@seyrn.app
+              hello@seyrn.app
             </a>{" "}
             and we will delete it promptly.
           </P>
@@ -343,10 +343,10 @@ export default function PrivacyPage() {
               Seyrn
               <br />
               <a
-                href="mailto:privacy@seyrn.app"
+                href="mailto:hello@seyrn.app"
                 style={{ color: "var(--gold)", textDecoration: "underline" }}
               >
-                privacy@seyrn.app
+                hello@seyrn.app
               </a>
             </p>
           </div>
@@ -354,21 +354,16 @@ export default function PrivacyPage() {
 
         {/* Footer nav */}
         <div
-          className="mt-16 pt-8 flex items-center justify-between"
+          className="mt-16 pt-8 flex items-center justify-between flex-wrap gap-4"
           style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
         >
-          <Link
-            href="/terms"
-            className="font-sans text-xs"
-            style={{ color: "var(--muted)" }}
-          >
+          <Link href="/terms" className="font-sans text-xs" style={{ color: "var(--muted)" }}>
             Terms of Service →
           </Link>
-          <Link
-            href="/"
-            className="font-sans text-xs"
-            style={{ color: "var(--muted)" }}
-          >
+          <Link href="/refund" className="font-sans text-xs" style={{ color: "var(--muted)" }}>
+            Refund Policy →
+          </Link>
+          <Link href="/" className="font-sans text-xs" style={{ color: "var(--muted)" }}>
             Back to Seyrn →
           </Link>
         </div>
