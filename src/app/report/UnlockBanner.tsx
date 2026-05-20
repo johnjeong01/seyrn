@@ -50,9 +50,9 @@ export default function UnlockBanner({ show, reportId }: Props) {
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ reportId, email, firstName }),
       });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (data.url) {
-        window.location.href = data.url;
+      const data = (await res.json()) as { checkoutUrl?: string; error?: string };
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
       } else {
         setCheckoutError(data.error ?? "Checkout failed. Please try again.");
         setLoading(false);

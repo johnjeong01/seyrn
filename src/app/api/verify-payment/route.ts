@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 function signReportId(reportId: string): string {
-  const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET ?? "";
+  const secret = process.env.PADDLE_WEBHOOK_SECRET ?? "";
   return crypto.createHmac("sha256", secret).update(reportId).digest("hex").slice(0, 40);
 }
 
@@ -16,15 +16,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing reportId" }, { status: 400 });
   }
 
-  // Signature path: checkout embeds HMAC in redirectUrl — verify immediately
+  // Signature path: checkout embeds HMAC in successUrl — verify immediately
   // without waiting for webhook. Signature is not guessable without the server secret.
   if (sig) {
     try {
       const expected = signReportId(reportId);
-      const sigBuf  = Buffer.from(sig.padEnd(expected.length, " "));
-      const expBuf  = Buffer.from(expected);
-      const valid   = sigBuf.length === expBuf.length &&
-                      crypto.timingSafeEqual(sigBuf, expBuf);
+      const sigBuf   = Buffer.from(sig.padEnd(expected.length, " "));
+      const expBuf   = Buffer.from(expected);
+      const valid    = sigBuf.length === expBuf.length &&
+                       crypto.timingSafeEqual(sigBuf, expBuf);
 
       if (valid) {
         // Mark paid in DB in the background (don't block the response)

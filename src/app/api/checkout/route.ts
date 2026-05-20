@@ -1,11 +1,11 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { lemonSqueezySetup, createCheckout } from "@lemonsqueezy/lemonsqueezy.js";
+import { getPaddle } from "@/lib/paddle";
 
 export const dynamic = "force-dynamic";
 
 function signReportId(reportId: string): string {
-  const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET ?? "";
+  const secret = process.env.PADDLE_WEBHOOK_SECRET ?? "";
   return crypto.createHmac("sha256", secret).update(reportId).digest("hex").slice(0, 40);
 }
 
@@ -21,47 +21,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "reportId is required" }, { status: 400 });
     }
 
-    lemonSqueezySetup({ apiKey: process.env.LEMONSQUEEZY_API_KEY! });
+    const paddle   = getPaddle();
+    const appUrl   = process.env.NEXT_PUBLIC_APP_URL ?? "https://seyrn.app";
+    const sig      = signReportId(reportId);
+    const successUrl = `${appUrl}/report?reportId=${reportId}&paid=true&sig=${sig}`;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://seyrn.app";
-    const sig = signReportId(reportId);
+    const transaction = await paddle.transactions.create({
+      items: [{ priceId: process.env.PADDLE_PRICE_ID_ONETIME! as string, quantity: 1 }],
+      customData: {
+        report_id:  reportId,
+        first_name: firstName ?? "",
+        email:      email ?? "",
+      },
+      checkout: { url: successUrl },
+    });
 
-    const response = await createCheckout(
-      process.env.LEMONSQUEEZY_STORE_ID!,
-      process.env.LEMONSQUEEZY_PRODUCT_ID_ONETIME!,
-      {
-        checkoutData: {
-          email: email ?? undefined,
-          name: firstName ?? undefined,
-          custom: {
-            report_id: reportId,
-            first_name: firstName ?? "",
-          },
-        },
-        checkoutOptions: {
-          embed: false,
-          media: false,
-          logo: true,
-        },
-        productOptions: {
-          name: "Seyrn Full Report",
-          description: "Your complete life pattern analysis",
-          redirectUrl: `${appUrl}/report?reportId=${reportId}&paid=true&sig=${sig}`,
-          receiptButtonText: "View Your Report",
-          receiptThankYouNote: firstName
-            ? `${firstName}, your pattern analysis is ready.`
-            : "Your pattern analysis is ready.",
-          enabledVariants: [],
-        },
-      }
-    );
-
-    const url = response.data?.data.attributes.url;
-    if (!url) {
-      throw new Error("No checkout URL returned");
+    const checkoutUrl = transaction.checkout?.url;
+    if (!checkoutUrl) {
+      throw new Error("No checkout URL returned from Paddle");
     }
 
-    return NextResponse.json({ url });
+    // Pre-fill customer email if provided
+    const finalUrl = email
+      ? `${checkoutUrl}?prefilled_email=${encodeURIComponent(email)}`
+      : checkoutUrl;
+
+    return NextResponse.json({ checkoutUrl: finalUrl });
   } catch (error) {
     console.error("Checkout error:", error);
     const message = error instanceof Error ? error.message : "Checkout failed";

@@ -1,5 +1,6 @@
-import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { EventName } from "@paddle/paddle-node-sdk";
+import { getPaddle } from "@/lib/paddle";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { sendReportReadyEmail } from "@/lib/email";
 
@@ -7,62 +8,59 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const rawBody = await req.text();
-    const signature = req.headers.get("x-signature");
+    const rawBody  = await req.text();
+    const signature = req.headers.get("paddle-signature") ?? "";
 
-    if (!signature || !process.env.LEMONSQUEEZY_WEBHOOK_SECRET) {
+    if (!signature || !process.env.PADDLE_WEBHOOK_SECRET) {
       return NextResponse.json({ error: "Missing signature or secret" }, { status: 401 });
     }
 
-    const hmac = crypto.createHmac("sha256", process.env.LEMONSQUEEZY_WEBHOOK_SECRET);
-    const digest = hmac.update(rawBody).digest("hex");
+    const paddle = getPaddle();
 
-    if (signature !== digest) {
-      console.error("Webhook signature mismatch");
+    let event;
+    try {
+      event = await paddle.webhooks.unmarshal(
+        rawBody,
+        process.env.PADDLE_WEBHOOK_SECRET,
+        signature,
+      );
+    } catch {
+      console.error("Paddle webhook signature mismatch");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    const payload = JSON.parse(rawBody) as {
-      meta: {
-        event_name: string;
-        custom_data?: { report_id?: string; first_name?: string };
-      };
-      data: {
-        id: string;
-        attributes: { user_email?: string; status?: string };
-      };
-    };
+    console.log("Paddle webhook event:", event.eventType);
 
-    const eventName = payload.meta.event_name;
-    console.log("LS webhook event:", eventName);
-
-    // Only handle successful orders
-    if (eventName !== "order_created") {
+    if (event.eventType !== EventName.TransactionCompleted) {
       return NextResponse.json({ received: true });
     }
 
-    const reportId = payload.meta.custom_data?.report_id;
-    const email = payload.data.attributes.user_email ?? null;
-    const firstName = payload.meta.custom_data?.first_name ?? null;
-    const paymentId = payload.data.id;
+    const data       = event.data as unknown as Record<string, unknown>;
+    const customData = (data.customData ?? {}) as Record<string, string>;
+    const reportId   = customData.report_id ?? null;
+    const firstName  = customData.first_name ?? null;
+    const txId       = (data.id as string) ?? null;
+
+    // Email: prefer Paddle customer record, fall back to what we embedded in customData
+    const customerObj = data.customer as Record<string, string> | null | undefined;
+    const email = customerObj?.email ?? customData.email ?? null;
 
     if (!reportId) {
-      console.error("No report_id in webhook custom_data");
+      console.error("Paddle webhook: no report_id in custom_data");
       return NextResponse.json({ received: true });
     }
 
-    const db = getSupabaseAdmin();
+    const db     = getSupabaseAdmin();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://seyrn.app";
 
-    // Mark report as paid
     const { error: updateErr } = await db
       .from("reports")
       .update({
-        is_paid: true,
-        payment_id: paymentId,
-        email: email ?? undefined,
-        first_name: firstName ?? undefined,
-        email_sent_at: new Date().toISOString(),
+        is_paid:        true,
+        payment_id:     txId,
+        email:          email ?? undefined,
+        first_name:     firstName ?? undefined,
+        email_sent_at:  new Date().toISOString(),
       })
       .eq("id", reportId);
 
@@ -72,7 +70,6 @@ export async function POST(req: NextRequest) {
       console.log("Report marked paid:", reportId);
     }
 
-    // Send report-ready email
     if (email) {
       const reportUrl = `${appUrl}/report?reportId=${reportId}&paid=true`;
       try {

@@ -187,7 +187,7 @@ export default function TermsPage() {
         <Section title="6. Payment & Refunds">
           <P>
             The one-time report purchase is priced at $19 USD. Payment is processed securely by
-            Lemon Squeezy. By completing a purchase, you authorize the charge to your payment
+            Paddle. By completing a purchase, you authorize the charge to your payment
             method.
           </P>
           <P>
@@ -197,7 +197,7 @@ export default function TermsPage() {
             items={[
               "Refunds are available within 7 days of purchase if you have not yet viewed your generated report",
               "Once your report has been generated and delivered to your email, the purchase is final",
-              "To request a refund, email hello@seyrn.app with your purchase email and order number",
+              "To request a refund, email hello@seyrn.app with your purchase email and Paddle order number",
               "Monthly subscription cancellations take effect at the end of the current billing period — no partial refunds",
             ]}
           />
@@ -254,7 +254,7 @@ export default function TermsPage() {
         <Section title="10. Third-Party Services">
           <P>
             Seyrn integrates with third-party services including Anthropic (AI), Supabase
-            (database), Lemon Squeezy (payments), Resend (email), and Vercel (hosting). Your use
+            (database), Paddle (payments), Resend (email), and Vercel (hosting). Your use
             of these services through Seyrn is also subject to their respective terms and privacy
             policies.
           </P>

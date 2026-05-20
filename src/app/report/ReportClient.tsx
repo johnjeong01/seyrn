@@ -151,7 +151,7 @@ export default function ReportClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Verify LemonSqueezy payment from redirect URL ───────────────
+  // ── Verify Paddle payment from redirect URL ─────────────────────
   // Poll DB instead of trusting ?paid=true from the URL directly.
   // LS webhook typically fires within 5–30 s after the redirect.
   useEffect(() => {

@@ -149,7 +149,7 @@ export default function RefundPage() {
           <ul className="mb-4 flex flex-col gap-2 pl-4">
             {[
               "The email address used at purchase",
-              "Your order number (found in your Lemon Squeezy receipt email)",
+              "Your order number (found in your Paddle receipt email)",
               "A brief description of the issue (if applicable)",
             ].map((item, i) => (
               <li key={i} style={{ listStyleType: "disc", listStylePosition: "inside", color: "var(--warm)" }}>
@@ -159,7 +159,7 @@ export default function RefundPage() {
           </ul>
           <P>
             We respond to all refund requests within 3 business days. Approved refunds are
-            processed through Lemon Squeezy and typically appear in your account within 5–10
+            processed through Paddle and typically appear in your account within 5–10
             business days depending on your bank.
           </P>
         </Section>

@@ -223,7 +223,7 @@ export default function PrivacyPage() {
             items={[
               "Anthropic — AI report generation (anthropic.com/privacy)",
               "Supabase — Database and authentication (supabase.com/privacy)",
-              "Lemon Squeezy — Payment processing (lemonsqueezy.com/privacy)",
+              "Paddle — Payment processing (paddle.com/legal/privacy-policy)",
               "Resend — Transactional email delivery (resend.com/privacy)",
               "Vercel — Website hosting and edge delivery (vercel.com/legal/privacy-policy)",
             ]}
