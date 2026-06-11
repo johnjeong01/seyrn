@@ -36,17 +36,15 @@ export async function POST(req: NextRequest) {
       checkout: { url: successUrl },
     });
 
-    const checkoutUrl = transaction.checkout?.url;
-    if (!checkoutUrl) {
-      throw new Error("No checkout URL returned from Paddle");
+    if (!transaction.id) {
+      throw new Error("No transaction ID returned from Paddle");
     }
 
-    // Pre-fill customer email if provided
-    const finalUrl = email
-      ? `${checkoutUrl}?prefilled_email=${encodeURIComponent(email)}`
-      : checkoutUrl;
+    // Paddle hosted checkout URL — transaction.checkout.url echoes back
+    // the success URL we passed; the actual payment page is built from the ID.
+    const checkoutUrl = `https://checkout.paddle.com/?_ptxn=${transaction.id}`;
 
-    return NextResponse.json({ checkoutUrl: finalUrl });
+    return NextResponse.json({ checkoutUrl });
   } catch (error) {
     console.error("Checkout error:", error);
     const message = error instanceof Error ? error.message : "Checkout failed";
