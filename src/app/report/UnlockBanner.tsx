@@ -2,6 +2,20 @@
 
 import { useState, useEffect } from "react";
 
+declare global {
+  interface Window {
+    Paddle?: {
+      Initialize: (config: { token: string }) => void;
+      Checkout: {
+        open: (params: {
+          transactionId: string;
+          settings?: { successUrl?: string };
+        }) => void;
+      };
+    };
+  }
+}
+
 interface Props {
   show: boolean;
   reportId: string | null;
@@ -12,6 +26,7 @@ export default function UnlockBanner({ show, reportId }: Props) {
   const [loading,       setLoading]       = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
+  // Visibility sentinel observer
   useEffect(() => {
     if (!show) return;
     const sentinel = document.getElementById("paywall-start");
@@ -22,6 +37,22 @@ export default function UnlockBanner({ show, reportId }: Props) {
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
+  }, [show]);
+
+  // Load Paddle.js and initialize once
+  useEffect(() => {
+    if (!show) return;
+    if (window.Paddle) return;
+
+    const script = document.createElement("script");
+    script.src   = "https://cdn.paddle.com/paddle/v2/paddle.js";
+    script.async = true;
+    script.onload = () => {
+      window.Paddle?.Initialize({
+        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
+      });
+    };
+    document.head.appendChild(script);
   }, [show]);
 
   if (!show || !visible) return null;
@@ -50,9 +81,21 @@ export default function UnlockBanner({ show, reportId }: Props) {
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ reportId, email, firstName }),
       });
-      const data = (await res.json()) as { checkoutUrl?: string; error?: string };
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+      const data = (await res.json()) as {
+        transactionId?: string;
+        successUrl?: string;
+        error?: string;
+      };
+
+      if (data.transactionId && window.Paddle) {
+        window.Paddle.Checkout.open({
+          transactionId: data.transactionId,
+          settings: { successUrl: data.successUrl },
+        });
+        setLoading(false);
+      } else if (!window.Paddle) {
+        setCheckoutError("Payment system not loaded. Please refresh and try again.");
+        setLoading(false);
       } else {
         setCheckoutError(data.error ?? "Checkout failed. Please try again.");
         setLoading(false);

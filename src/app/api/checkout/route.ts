@@ -40,11 +40,9 @@ export async function POST(req: NextRequest) {
       throw new Error("No transaction ID returned from Paddle");
     }
 
-    // Paddle hosted checkout URL — transaction.checkout.url echoes back
-    // the success URL we passed; the actual payment page is built from the ID.
-    const checkoutUrl = `https://checkout.paddle.com/?_ptxn=${transaction.id}`;
-
-    return NextResponse.json({ checkoutUrl });
+    // Return transactionId + successUrl so the client can open Paddle.js overlay.
+    // checkout.paddle.com/?_ptxn=… requires Paddle.js and cannot be used as a bare redirect.
+    return NextResponse.json({ transactionId: transaction.id, successUrl });
   } catch (error) {
     console.error("Checkout error:", error);
     const message = error instanceof Error ? error.message : "Checkout failed";
