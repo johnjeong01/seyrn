@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     const customData = (data.customData ?? {}) as Record<string, string>;
     const reportId   = customData.report_id ?? null;
     const firstName  = customData.first_name ?? null;
+    const promoCode  = customData.promo_code || null;
     const txId       = (data.id as string) ?? null;
 
     // Email: prefer Paddle customer record, fall back to what we embedded in customData
@@ -68,6 +69,21 @@ export async function POST(req: NextRequest) {
       console.error("DB update failed:", updateErr.message);
     } else {
       console.log("Report marked paid:", reportId);
+    }
+
+    // Record promo redemption (unique constraint prevents duplicates)
+    if (promoCode && email) {
+      try {
+        await db.from("promo_redemptions").insert({
+          email,
+          promo_code: promoCode,
+          report_id:  reportId,
+        });
+        console.log("Promo redemption recorded:", promoCode, email);
+      } catch (err) {
+        // Unique constraint violation = duplicate slip-through — log and continue
+        console.error("Promo redemption insert failed:", err instanceof Error ? err.message : err);
+      }
     }
 
     if (email) {

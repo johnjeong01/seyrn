@@ -22,9 +22,11 @@ interface Props {
 }
 
 export default function UnlockBanner({ show, reportId }: Props) {
-  const [visible,       setVisible]       = useState(false);
-  const [loading,       setLoading]       = useState(false);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [visible,          setVisible]          = useState(false);
+  const [loading,          setLoading]          = useState(false);
+  const [checkoutError,    setCheckoutError]    = useState<string | null>(null);
+  const [promoCode,        setPromoCode]        = useState<string | null>(null);
+  const [alreadyRedeemed,  setAlreadyRedeemed]  = useState(false);
 
   // Visibility sentinel observer
   useEffect(() => {
@@ -44,9 +46,9 @@ export default function UnlockBanner({ show, reportId }: Props) {
     if (!show) return;
     if (window.Paddle) return;
 
-    const script = document.createElement("script");
-    script.src   = "https://cdn.paddle.com/paddle/v2/paddle.js";
-    script.async = true;
+    const script  = document.createElement("script");
+    script.src    = "https://cdn.paddle.com/paddle/v2/paddle.js";
+    script.async  = true;
     script.onload = () => {
       window.Paddle?.Initialize({
         token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
@@ -55,37 +57,57 @@ export default function UnlockBanner({ show, reportId }: Props) {
     document.head.appendChild(script);
   }, [show]);
 
+  // Read promo code stored by landing page banner
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("seyrn-promo");
+      if (stored) setPromoCode(stored);
+    } catch { /* ignore */ }
+  }, []);
+
   if (!show || !visible) return null;
 
-  async function handleCheckout() {
+  async function handleCheckout(overridePromo?: string | null) {
     if (!reportId) {
       setCheckoutError("Report is still loading. Please wait a moment and try again.");
       return;
     }
     setLoading(true);
     setCheckoutError(null);
-    try {
-      let email: string | undefined;
-      let firstName: string | undefined;
-      try {
-        const raw = localStorage.getItem("seyrn-onboarding-data");
-        if (raw) {
-          const parsed = JSON.parse(raw) as { email?: string; firstName?: string };
-          email     = parsed.email;
-          firstName = parsed.firstName;
-        }
-      } catch { /* ignore */ }
 
+    let email: string | undefined;
+    let firstName: string | undefined;
+    try {
+      const raw = localStorage.getItem("seyrn-onboarding-data");
+      if (raw) {
+        const parsed = JSON.parse(raw) as { email?: string; firstName?: string };
+        email     = parsed.email;
+        firstName = parsed.firstName;
+      }
+    } catch { /* ignore */ }
+
+    const activePromo = overridePromo === null ? null : (overridePromo ?? promoCode);
+
+    try {
       const res  = await fetch("/api/checkout", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ reportId, email, firstName }),
+        body:    JSON.stringify({ reportId, email, firstName, discountCode: activePromo }),
       });
       const data = (await res.json()) as {
         transactionId?: string;
         successUrl?: string;
         error?: string;
       };
+
+      if (res.status === 409 && data.error === "already_redeemed") {
+        setAlreadyRedeemed(true);
+        setCheckoutError(
+          "Looks like you've already claimed your free report with this email."
+        );
+        setLoading(false);
+        return;
+      }
 
       if (data.transactionId && window.Paddle) {
         window.Paddle.Checkout.open({
@@ -105,6 +127,8 @@ export default function UnlockBanner({ show, reportId }: Props) {
       setLoading(false);
     }
   }
+
+  const isPromo = promoCode && !alreadyRedeemed;
 
   return (
     <div
@@ -132,24 +156,41 @@ export default function UnlockBanner({ show, reportId }: Props) {
         }}
       >
         <div>
-          <p
-            className="font-serif font-light"
-            style={{ fontSize: "clamp(1rem, 2.5vw, 1.3rem)", color: "var(--cream)", lineHeight: 1.2, marginBottom: "0.2rem" }}
-          >
-            Your pattern reveals what you can&apos;t see yet.
-          </p>
-          <p className="font-sans text-xs" style={{ color: "var(--muted)" }}>
-            Unlock the full analysis — and what it means for today
-          </p>
+          {isPromo ? (
+            <>
+              <p
+                className="font-serif font-light"
+                style={{ fontSize: "clamp(1rem, 2.5vw, 1.3rem)", color: "var(--cream)", lineHeight: 1.2, marginBottom: "0.2rem" }}
+              >
+                Your free report is ready.
+              </p>
+              <p className="font-sans text-xs" style={{ color: "var(--gold)" }}>
+                Launch offer applied — no payment required
+              </p>
+            </>
+          ) : (
+            <>
+              <p
+                className="font-serif font-light"
+                style={{ fontSize: "clamp(1rem, 2.5vw, 1.3rem)", color: "var(--cream)", lineHeight: 1.2, marginBottom: "0.2rem" }}
+              >
+                Your pattern reveals what you can&apos;t see yet.
+              </p>
+              <p className="font-sans text-xs" style={{ color: "var(--muted)" }}>
+                Unlock the full analysis — and what it means for today
+              </p>
+            </>
+          )}
         </div>
 
         {checkoutError && (
-          <p className="w-full font-sans text-xs text-center sm:text-left" style={{ color: "var(--rust)", marginBottom: "0.5rem" }}>
+          <p className="w-full font-sans text-xs text-center sm:text-left" style={{ color: alreadyRedeemed ? "var(--muted)" : "var(--rust)", marginBottom: "0.25rem" }}>
             {checkoutError}
           </p>
         )}
 
-        <div className="w-full sm:w-auto">
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2 items-center">
+          {/* Primary button */}
           <button
             disabled={loading}
             className="font-sans text-xs tracking-widest uppercase transition-all w-full sm:w-auto"
@@ -165,10 +206,37 @@ export default function UnlockBanner({ show, reportId }: Props) {
             }}
             onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "var(--gold-light)"; }}
             onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = "var(--gold)"; }}
-            onClick={handleCheckout}
+            onClick={() => handleCheckout(alreadyRedeemed ? null : undefined)}
           >
-            {loading ? "Loading…" : "Unlock Full Report — $19"}
+            {loading
+              ? "Loading…"
+              : isPromo
+              ? "Claim Free Report"
+              : "Unlock Full Report — $19"}
           </button>
+
+          {/* If already redeemed, offer paid path */}
+          {alreadyRedeemed && (
+            <button
+              disabled={loading}
+              className="font-sans text-xs tracking-widest uppercase transition-all w-full sm:w-auto"
+              style={{
+                background:    "transparent",
+                color:         "var(--muted)",
+                padding:       "0.75rem 1.5rem",
+                border:        "1px solid rgba(122,114,104,0.4)",
+                cursor:        "pointer",
+                fontWeight:    400,
+                letterSpacing: "0.12em",
+                whiteSpace:    "nowrap",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(122,114,104,0.4)"; e.currentTarget.style.color = "var(--muted)"; }}
+              onClick={() => handleCheckout(null)}
+            >
+              Unlock for $19
+            </button>
+          )}
         </div>
       </div>
     </div>
