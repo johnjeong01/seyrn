@@ -14,10 +14,10 @@ export default function Nav() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
+      className={`sticky top-0 left-0 right-0 z-50 transition-all duration-700 ${
         scrolled
           ? "py-4 bg-[var(--ink)]/90 backdrop-blur-xl border-b border-[var(--gold)]/10"
-          : "py-6 bg-transparent"
+          : "py-6 bg-[var(--ink)]"
       }`}
     >
       <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
